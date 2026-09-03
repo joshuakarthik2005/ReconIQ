@@ -448,3 +448,53 @@ def run_deterministic_matching(
                         f"amount={txn.amount}, "
                         f"int_date={txn.date}, ext_date={ext.date}"
                     ),
+                    timestamp=datetime.now().isoformat(),
+                )
+
+    def _gen_rule_3(txn: InternalTransaction):
+        cands = ext_index.by_ref.get(txn.reference_id, [])
+        for ext in cands:
+            if ext.ext_id in claimed:
+                continue
+            if (
+                _amount_within_tolerance(txn.amount, ext.amount, fee_tolerance_pct)
+                and _date_within_window(txn.date, ext.date, date_window_days)
+            ):
+                diff_pct = (
+                    abs(txn.amount - ext.amount) / abs(txn.amount) * 100
+                    if txn.amount != 0
+                    else Decimal("0")
+                )
+                yield MatchResult(
+                    internal_id=txn.txn_id,
+                    external_id=ext.ext_id,
+                    match_path=MatchPath.RULE,
+                    confidence=1.0,
+                    rule_name="ref_fee_tolerance",
+                    reasoning=(
+                        f"Ref match with fee/rounding difference: "
+                        f"ref={txn.reference_id}, "
+                        f"int_amount={txn.amount}, ext_amount={ext.amount}, "
+                        f"diff={diff_pct:.2f}%, "
+                        f"int_date={txn.date}, ext_date={ext.date}"
+                    ),
+                    timestamp=datetime.now().isoformat(),
+                )
+
+    def _gen_rule_4(txn: InternalTransaction):
+        key = (txn.amount, txn.date)
+        int_candidates = int_index.by_amount_date.get(key, [])
+        if len(int_candidates) != 1:
+            return
+        ext_candidates = ext_index.by_amount_date.get(key, [])
+        unclaimed = [e for e in ext_candidates if e.ext_id not in claimed]
+        if len(unclaimed) != 1:
+            return
+        ext = unclaimed[0]
+        yield MatchResult(
+            internal_id=txn.txn_id,
+            external_id=ext.ext_id,
+            match_path=MatchPath.RULE,
+            confidence=0.95,
+            rule_name="amount_date_unique",
+            reasoning=(
