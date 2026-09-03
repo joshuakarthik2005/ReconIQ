@@ -285,7 +285,86 @@ def parse_format_b(path: Path) -> Tuple[List[ExternalTransaction], List[ParseErr
     return records, errors
 
 
+def parse_format_c(path: Path) -> Tuple[List[ExternalTransaction], List[ParseError]]:
+    """
+    Parse Format C -- JSON bank API feed with nested structure.
 
+    Reference IDs may appear in three locations:
+      1. Top-level ``reference`` field
+      2. ``metadata.payment_ref``
+      3. Embedded in ``narrative`` as ``| Ref: <id>``
+
+    The extraction path is recorded in ``original_data["_ref_extraction_path"]``
+    for downstream stats and testing.  The raw narrative is always retained
+    in ``raw_description`` regardless of whether a ref was extracted.
+    """
+    records: List[ExternalTransaction] = []
+    errors: List[ParseError] = []
+
+    with open(path, encoding="utf-8") as fh:
+        data = json.load(fh, parse_float=Decimal)
+
+    for idx, entry in enumerate(data.get("transactions", [])):
+        try:
+            ext_id = entry.get("id", f"C_{idx + 1:03d}")
+
+            # Amount from nested object -- already Decimal via parse_float
+            amt_obj = entry.get("amount", {})
+            if isinstance(amt_obj, dict):
+                amt_val = amt_obj.get("value", Decimal("0"))
+            else:
+                amt_val = amt_obj
+            # Ensure Decimal (handles int values from JSON too)
+            if not isinstance(amt_val, Decimal):
+                amt_val = Decimal(str(amt_val))
+            amount = amt_val.quantize(TWO_DP, rounding=ROUND_HALF_UP)
+
+            # Type -> sign
+            txn_type = entry.get("type", "CREDIT")
+            if txn_type == "DEBIT":
+                amount = -amount
+
+            # Date from ISO timestamp
+            ts = entry.get("timestamp", "")
+            if not ts:
+                raise ValueError("Missing timestamp")
+            date_str = ts[:10]  # YYYY-MM-DD portion
+
+            # Reference extraction (3 locations)
+            ref, ref_path = _extract_ref_from_c(entry)
+
+            # Raw narrative -- always retained
+            narrative = entry.get("narrative", "")
+
+            # Store extraction path metadata for testing / reporting
+            enriched_data = dict(entry)
+            enriched_data["_ref_extraction_path"] = ref_path
+
+            records.append(ExternalTransaction(
+                ext_id=ext_id,
+                reference_id=ref,
+                amount=amount,
+                date=date_str,
+                description=narrative,
+                source_format="C",
+                raw_description=narrative,
+                original_data=enriched_data,
+            ))
+        except Exception as exc:
+            errors.append(ParseError(
+                source_file=path.name,
+                row_number=idx + 1,
+                raw_data=entry if isinstance(entry, dict) else str(entry),
+                error_message=f"{type(exc).__name__}: {exc}",
+                timestamp=datetime.now().isoformat(),
+            ))
+
+    return records, errors
+
+
+# ═══════════════════════════════════════════════════════════════
+# Convenience Functions
+# ═══════════════════════════════════════════════════════════════
 
 def parse_all_external(
     data_dir: Path,
