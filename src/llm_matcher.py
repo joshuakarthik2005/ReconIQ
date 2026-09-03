@@ -568,3 +568,93 @@ def _parse_group_response(
     raw: str,
     group: _AmbiguityGroup,
     confidence_threshold: float,
+) -> List[Tuple[str, Optional[str], float, str, bool]]:
+    """
+    Parse group-assignment response.
+
+    Returns list of (internal_id, ext_id | None, confidence, reasoning, is_partial_refund).
+
+    Code-level validation (never trusts the prompt alone):
+      1. Each assignment individually clears confidence_threshold
+      2. No external is assigned twice within the group
+    """
+    try:
+        data = json.loads(raw)
+    except json.JSONDecodeError:
+        return [
+            (txn.txn_id, None, 0.0, f"JSON parse error: {raw[:200]}", False)
+            for txn in group.internals
+        ]
+
+    assignments = data.get("assignments", [])
+    label_to_txn = {chr(65 + i): txn for i, txn in enumerate(group.internals)}
+
+    results: List[Tuple[str, Optional[str], float, str, bool]] = []
+    claimed_in_group: Set[str] = set()
+
+    for asn in assignments:
+        label = str(asn.get("internal_label", ""))
+        match_idx = asn.get("match_index")
+        confidence = float(asn.get("confidence", 0.0))
+        reasoning = str(asn.get("reasoning", ""))
+        is_partial_refund = bool(asn.get("is_partial_refund", False))
+
+        txn = label_to_txn.get(label)
+        if not txn:
+            continue
+
+        ext_id = None
+
+        if match_idx is not None and isinstance(match_idx, int):
+            if 1 <= match_idx <= len(group.candidates):
+                candidate = group.candidates[match_idx - 1]
+
+                # Validation 1: confidence threshold
+                if confidence < confidence_threshold:
+                    reasoning = (
+                        f"Below threshold ({confidence:.2f} < "
+                        f"{confidence_threshold}): {reasoning}"
+                    )
+                    is_partial_refund = False
+                # Validation 2: no double-claim within group
+                elif candidate.ext_id in claimed_in_group:
+                    reasoning = (
+                        f"Rejected: {candidate.ext_id} already assigned "
+                        f"in this group: {reasoning}"
+                    )
+                    is_partial_refund = False
+                else:
+                    ext_id = candidate.ext_id
+                    claimed_in_group.add(ext_id)
+
+        results.append((txn.txn_id, ext_id, confidence, reasoning, is_partial_refund))
+
+    # Handle internals missing from the response
+    responded = {r[0] for r in results}
+    for txn in group.internals:
+        if txn.txn_id not in responded:
+            results.append(
+                (txn.txn_id, None, 0.0, "Not included in LLM response", False)
+            )
+
+    return results
+
+
+# ═══════════════════════════════════════════════════════════════
+# Public API
+# ═══════════════════════════════════════════════════════════════
+
+def run_llm_matching(
+    residual_internal: List[InternalTransaction],
+    residual_external: List[ExternalTransaction],
+    *,
+    confidence_threshold: float = DEFAULT_CONFIDENCE_THRESHOLD,
+    max_candidates: int = DEFAULT_MAX_CANDIDATES,
+    api_key: Optional[str] = None,
+) -> LLMMatchingOutput:
+    """
+    Run the LLM-assisted matching on residual records from Part 2.
+
+    Sequencing (order matters):
+      1. Detect ambiguity groups (duplicate_amount pattern)
+      2. Resolve groups via joint LLM call — claims externals
