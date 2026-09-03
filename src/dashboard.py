@@ -447,6 +447,7 @@ tbody tr:hover {{
   <div class="kpi-card red">
     <div class="label">Exceptions</div>
     <div class="value">{len(exceptions)}</div>
+    <div class="label" style="margin:0">{unmatched_int} internal / {unmatched_ext} external</div>
   </div>
   <div class="kpi-card orange">
     <div class="label">External Records</div>
