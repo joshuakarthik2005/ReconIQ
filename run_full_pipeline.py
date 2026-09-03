@@ -18,6 +18,7 @@ modified), the script hard-fails — it does NOT silently skip or fall back.
 import argparse
 import sys
 import time
+from decimal import Decimal
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent
@@ -196,6 +197,17 @@ def main():
         "--regenerate", action="store_true",
         help="Regenerate synthetic data before running pipeline"
     )
+    parser.add_argument(
+        "--fee-tolerance-pct", type=str, default="3",
+        help="Max %% amount difference allowed for the fee/rounding-tolerance "
+             "rule (default: 3, i.e. 3%%). Was hardcoded; tune per payment "
+             "gateway instead of editing source."
+    )
+    parser.add_argument(
+        "--date-window-days", type=int, default=3,
+        help="Max date drift (in days) allowed for rules that permit a "
+             "settlement-date window (default: 3)."
+    )
     args = parser.parse_args()
 
     t0 = time.perf_counter()
@@ -220,7 +232,11 @@ def main():
 
     # ── Part 2: Deterministic Matching ───────────────────────
     print("Part 2: Deterministic matching...")
-    det = run_deterministic_matching(int_records, ext_records)
+    det = run_deterministic_matching(
+        int_records, ext_records,
+        fee_tolerance_pct=Decimal(args.fee_tolerance_pct),
+        date_window_days=args.date_window_days,
+    )
     rule_matches = list(det.matched)
     print(f"  {len(rule_matches)} matched, "
           f"{len(det.residual_internal)} residual internal")
@@ -260,7 +276,7 @@ def main():
             ]
         except (RuntimeError, OSError, ConnectionError) as e:
             print(f"  [WARN] Live LLM matching failed ({type(e).__name__}): {e}")
-            print(f"  Falling back to canonical results...")
+            print("  Falling back to canonical results...")
             args.live = False  # Fall through to canonical path below
 
 
