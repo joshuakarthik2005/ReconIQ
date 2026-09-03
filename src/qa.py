@@ -15,7 +15,6 @@ Three tiers:
 import json
 import os
 import re
-import time
 from collections import Counter
 from pathlib import Path
 from typing import Dict, List, Optional
@@ -157,7 +156,6 @@ class SettlementQA:
     def summary(self) -> str:
         """Return the pipeline summary from exceptions.json."""
         s = self._exceptions.get("summary", {})
-        exc_count = len(self._exceptions.get("exceptions", []))
         path_counts = self.count_by_resolution_path()
 
         lines = [
@@ -316,7 +314,7 @@ class SettlementQA:
         if not context_parts:
             # No specific IDs mentioned — provide the summary
             context_parts.append(
-                f"Pipeline summary:\n"
+                "Pipeline summary:\n"
                 + json.dumps(self._exceptions.get("summary", {}), indent=2)
             )
 

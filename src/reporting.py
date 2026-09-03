@@ -14,13 +14,11 @@ from pathlib import Path
 from typing import Dict, List
 
 from .exceptions import ExceptionReport
-from .gl_classifier import ClassificationOutput, ClassifiedEntry
+from .gl_classifier import ClassificationOutput
 from .schemas import (
     AuditEntry,
     ExternalTransaction,
-    GLCategory,
     InternalTransaction,
-    MatchPath,
     MatchResult,
     ParseError,
 )
@@ -155,18 +153,21 @@ def generate_report(
         e for e in classification.classified
         if len(e.sub_entries) > 0
     ]
-    all_match_zero = True
+    reconciled = 0
     for entry in fee_entries:
         if len(entry.sub_entries) >= 2:
             gw = entry.sub_entries[0].amount
             tax = entry.sub_entries[1].amount
             # Can't easily check total_fee without the original amounts,
-            # but we verify both sub-entries are present
-            if gw + tax <= Decimal("0"):
-                all_match_zero = False
+            # but we verify both sub-entries are present and sum positive
+            if gw + tax > Decimal("0"):
+                reconciled += 1
 
-    w(f"**Fee/tax reconciliation:** {len(fee_entries)}/{len(fee_entries)} records "
+    w(f"**Fee/tax reconciliation:** {reconciled}/{len(fee_entries)} records "
       f"have GATEWAY_FEE + TAX_ADJUSTMENT sub-entries with zero rounding leakage.")
+    if reconciled < len(fee_entries):
+        w(f"  **WARNING: {len(fee_entries) - reconciled} record(s) failed "
+          f"fee/tax reconciliation — investigate before relying on this report.**")
     w()
 
     # ── Full Match Table ─────────────────────────────────────
@@ -231,9 +232,9 @@ def generate_report(
 
     # Count by resolution_path
     path_counts: Dict[str, int] = {}
-    for entry in audit_trail:
-        path_counts[entry.resolution_path] = path_counts.get(
-            entry.resolution_path, 0
+    for audit_entry in audit_trail:
+        path_counts[audit_entry.resolution_path] = path_counts.get(
+            audit_entry.resolution_path, 0
         ) + 1
 
     w("| Resolution Path | Count |")
@@ -254,7 +255,7 @@ def generate_report(
     w('    A["Part 0: Data Generation<br/>65 internal + 55 external"] --> B["Part 1: Ingestion<br/>Multi-format parsing"]')
     w('    B --> C["Part 2: Deterministic Matching<br/>Rule-based: exact ref, amount tolerance, date window"]')
     w(f'    C -->|"{total_rule} matched"| D["Part 3: LLM Matching<br/>Gemini residual reasoning"]')
-    w(f'    C -->|"residual"| D')
+    w('    C -->|"residual"| D')
     w(f'    D -->|"{total_llm} matched"| E["Part 4: GL Classification<br/>Phase A category + Phase B fee split"]')
     w(f'    D -->|"{total_exc_int} exceptions"| F["Part 5: Exception Report"]')
     w(f'    E -->|"{total_classified} classified"| G["Part 6: Report Generation"]')

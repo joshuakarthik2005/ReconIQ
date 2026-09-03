@@ -24,7 +24,7 @@ import csv
 import json
 import re
 from datetime import datetime
-from decimal import Decimal, ROUND_HALF_UP, InvalidOperation
+from decimal import Decimal, ROUND_HALF_UP
 from pathlib import Path
 from typing import Optional, Tuple, List
 

@@ -23,12 +23,10 @@ from datetime import datetime
 from pathlib import Path
 from typing import List
 
-from .gl_classifier import ClassificationOutput, ClassifiedEntry
+from .gl_classifier import ClassificationOutput
 from .exceptions import ExceptionReport
 from .schemas import (
     AuditEntry,
-    ExceptionRecord,
-    MatchPath,
     MatchResult,
     ParseError,
 )
