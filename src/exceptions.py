@@ -219,3 +219,4 @@ def save_exceptions(report: ExceptionReport, output_path: Path) -> None:
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with open(output_path, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2, ensure_ascii=False)
+# _version: specific-reasons-v1
