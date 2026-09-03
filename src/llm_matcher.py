@@ -727,3 +727,88 @@ def run_llm_matching(
         if candidates:
             phase2_with_cands.append((txn, candidates))
         # else: no candidates -> straight to exception (no LLM call)
+
+    # Build batches
+    for batch_start in range(0, len(phase2_with_cands), BATCH_SIZE):
+        batch = phase2_with_cands[batch_start:batch_start + BATCH_SIZE]
+
+        if len(batch) == 1:
+            # Single record: use single prompt
+            txn, candidates = batch[0]
+            prompt = _single_prompt(txn, candidates)
+            raw, in_tok, out_tok = _call_llm(client, _SYSTEM_PROMPT, prompt)
+            total_calls += 1
+            total_in_tokens += in_tok
+            total_out_tokens += out_tok
+
+            ext_id, confidence, reasoning, is_partial = _parse_single_response(
+                raw, candidates, confidence_threshold
+            )
+            if ext_id and ext_id not in claimed:
+                claimed.add(ext_id)
+                matched.append(MatchResult(
+                    internal_id=txn.txn_id,
+                    external_id=ext_id,
+                    match_path=MatchPath.LLM,
+                    confidence=confidence,
+                    rule_name="llm_single",
+                    reasoning=reasoning,
+                    is_partial_refund=is_partial,
+                    timestamp=datetime.now().isoformat(),
+                ))
+        else:
+            # Multiple records: scoped-candidate batch prompt
+            # Each record keeps its OWN candidate list (not merged)
+            # Filter out records whose candidates are all already claimed
+            batch_items: List[BatchItem] = []
+            for txn, cands in batch:
+                remaining = [c for c in cands if c.ext_id not in claimed]
+                if remaining:
+                    batch_items.append((txn, remaining))
+            if not batch_items:
+                continue
+            prompt = _batch_prompt(batch_items)
+            raw, in_tok, out_tok = _call_llm(client, _SYSTEM_PROMPT, prompt)
+            total_calls += 1
+            total_in_tokens += in_tok
+            total_out_tokens += out_tok
+
+            assignments = _parse_batch_response(
+                raw, batch_items, confidence_threshold
+            )
+            for internal_id, ext_id, confidence, reasoning, is_partial in assignments:
+                if ext_id and ext_id not in claimed:
+                    claimed.add(ext_id)
+                    matched.append(MatchResult(
+                        internal_id=internal_id,
+                        external_id=ext_id,
+                        match_path=MatchPath.LLM,
+                        confidence=confidence,
+                        rule_name="llm_batch",
+                        reasoning=reasoning,
+                        is_partial_refund=is_partial,
+                        timestamp=datetime.now().isoformat(),
+                    ))
+
+    # ── Collect exceptions ───────────────────────────────────
+    matched_int_ids = {m.internal_id for m in matched}
+    exceptions_internal = [
+        txn.txn_id for txn in residual_internal
+        if txn.txn_id not in matched_int_ids
+    ]
+    exceptions_external = [
+        ext.ext_id for ext in residual_external
+        if ext.ext_id not in claimed
+    ]
+
+    elapsed = time.perf_counter() - t0
+
+    return LLMMatchingOutput(
+        matched=matched,
+        exceptions_internal=exceptions_internal,
+        exceptions_external=exceptions_external,
+        llm_calls=total_calls,
+        llm_input_tokens=total_in_tokens,
+        llm_output_tokens=total_out_tokens,
+        elapsed_seconds=elapsed,
+    )
