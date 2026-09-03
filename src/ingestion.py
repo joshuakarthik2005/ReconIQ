@@ -406,3 +406,4 @@ def save_parse_errors(errors: List[ParseError], path: Path) -> None:
 
     with open(path, "w", encoding="utf-8") as fh:
         json.dump(serialisable, fh, indent=2, ensure_ascii=False, default=str)
+# _version: refactored-decimal-v1
