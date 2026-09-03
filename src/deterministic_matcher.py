@@ -198,3 +198,153 @@ def _try_rule_3(
 
 def _try_rule_4(
     txn: InternalTransaction,
+    ext_index: _ExternalIndex,
+    int_index: _InternalIndex,
+    claimed: Set[str],
+) -> Optional[MatchResult]:
+    """
+    Rule 4: amount + date match, no ref needed, but unique in BOTH directions.
+
+    - Exactly one unclaimed external with this (amount, date)
+    - Exactly one internal with this (amount, date)
+    If either side has multiple candidates, the match is ambiguous -> skip.
+    """
+    key = (txn.amount, txn.date)
+
+    # Check internal-side uniqueness
+    int_candidates = int_index.by_amount_date.get(key, [])
+    if len(int_candidates) != 1:
+        return None     # ambiguous on internal side
+
+    # Check external-side uniqueness (excluding already-claimed)
+    ext_candidates = ext_index.by_amount_date.get(key, [])
+    unclaimed = [e for e in ext_candidates if e.ext_id not in claimed]
+    if len(unclaimed) != 1:
+        return None     # ambiguous or no match on external side
+
+    ext = unclaimed[0]
+    return MatchResult(
+        internal_id=txn.txn_id,
+        external_id=ext.ext_id,
+        match_path=MatchPath.RULE,
+        confidence=0.95,
+        rule_name="amount_date_unique",
+        reasoning=(
+            f"Amount+date match, bidirectionally unique: "
+            f"amount={txn.amount}, date={txn.date}, "
+            f"no ref on external (ext has ref={ext.reference_id!r})"
+        ),
+        timestamp=datetime.now().isoformat(),
+    )
+
+
+# ═══════════════════════════════════════════════════════════════
+# Optimal assignment (Hungarian algorithm)
+# ═══════════════════════════════════════════════════════════════
+
+def _optimal_assign_tier(
+    candidates: List[MatchResult],
+) -> List[MatchResult]:
+    """
+    Given a list of candidate MatchResults (possibly many-to-many between
+    internal and external IDs), find the maximum-cardinality 1:1 assignment
+    using the Hungarian algorithm.
+
+    Ties are broken by preferring higher confidence, then alphabetical
+    internal_id for reproducibility.
+
+    Returns the subset of *candidates* that form the optimal assignment.
+    """
+    if not candidates:
+        return []
+
+    # Deduplicate: for each (internal, external) pair, keep the best candidate
+    best: Dict[Tuple[str, str], MatchResult] = {}
+    for c in candidates:
+        key = (c.internal_id, c.external_id)
+        if key not in best or c.confidence > best[key].confidence:
+            best[key] = c
+
+    candidates = list(best.values())
+
+    # Collect unique internal/external IDs
+    int_ids = sorted({c.internal_id for c in candidates})
+    ext_ids = sorted({c.external_id for c in candidates})
+
+    if len(int_ids) == 0 or len(ext_ids) == 0:
+        return []
+
+    # Fast path: if every internal has exactly one candidate external and
+    # no external is contested, Hungarian is unnecessary
+    int_to_ext: Dict[str, Set[str]] = {}
+    ext_to_int: Dict[str, Set[str]] = {}
+    for c in candidates:
+        int_to_ext.setdefault(c.internal_id, set()).add(c.external_id)
+        ext_to_int.setdefault(c.external_id, set()).add(c.internal_id)
+
+    all_uncontested = all(
+        len(exts) == 1 for exts in int_to_ext.values()
+    ) and all(
+        len(ints) == 1 for ints in ext_to_int.values()
+    )
+
+    if all_uncontested:
+        # Each internal has exactly one external, no conflicts — take them all
+        result_map: Dict[str, MatchResult] = {}
+        for c in candidates:
+            if c.internal_id not in result_map or c.confidence > result_map[c.internal_id].confidence:
+                result_map[c.internal_id] = c
+        return list(result_map.values())
+
+    # Build cost matrix for Hungarian algorithm
+    # scipy minimizes cost, so we use (1 - confidence) as cost.
+    # Disallowed assignments get a large cost (BIG).
+    from scipy.optimize import linear_sum_assignment
+    import numpy as np
+
+    int_idx = {iid: i for i, iid in enumerate(int_ids)}
+    ext_idx = {eid: j for j, eid in enumerate(ext_ids)}
+
+    BIG = 1e9
+    n_int, n_ext = len(int_ids), len(ext_ids)
+    cost = np.full((n_int, n_ext), BIG)
+
+    cand_lookup: Dict[Tuple[int, int], MatchResult] = {}
+    for c in candidates:
+        i, j = int_idx[c.internal_id], ext_idx[c.external_id]
+        this_cost = 1.0 - c.confidence
+        if cost[i, j] == BIG or this_cost < cost[i, j]:
+            cost[i, j] = this_cost
+            cand_lookup[(i, j)] = c
+
+    row_ind, col_ind = linear_sum_assignment(cost)
+
+    assigned: List[MatchResult] = []
+    for i, j in zip(row_ind, col_ind):
+        if cost[i, j] < BIG:
+            assigned.append(cand_lookup[(i, j)])
+
+    return assigned
+
+
+def run_deterministic_matching(
+    internals: List[InternalTransaction],
+    externals: List[ExternalTransaction],
+    *,
+    # Fee tolerance tuned to this dataset's Razorpay gateway fees (1.5-2.5%).
+    # Do not change without re-validating the 8 ref_fee_tolerance matches.
+    fee_tolerance_pct: Decimal = Decimal("3"),
+    date_window_days: int = 3,
+) -> MatchingOutput:
+    """
+    Run the deterministic (rule-based) matching engine.
+
+    Uses a tiered optimal assignment strategy:
+    1. For each rule tier (in priority order), collect ALL candidate edges
+       among unclaimed records.
+    2. Use the Hungarian algorithm (scipy.optimize.linear_sum_assignment) to
+       find the maximum-cardinality 1:1 assignment within that tier.
+    3. Claim the optimal set, then proceed to the next tier with the remaining
+       unclaimed records.
+
+    This eliminates order-dependent starvation where an earlier internal
