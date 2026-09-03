@@ -398,3 +398,83 @@ def _parse_classification_response(
         try:
             label = str(entry.get("label", "")).strip().upper()
             item = label_to_item.get(label)
+            if not item:
+                continue
+
+            match, internal, external = item
+            cat_name = str(entry.get("category", "UNCLASSIFIED")).strip().upper()
+            reasoning = str(entry.get("reasoning", ""))
+
+            # Map category string to enum
+            gl_cat = _GL_CATEGORY_MAP.get(cat_name, GLCategory.UNCLASSIFIED)
+
+            results.append(ClassifiedEntry(
+                match_result=match,
+                gl_category=gl_cat,
+                classification_path="llm",
+                rule_name="llm_classification",
+                reasoning=reasoning,
+            ))
+            responded_labels.add(label)
+
+        except Exception as e:
+            try:
+                label = str(entry.get("label", "?")).strip().upper()
+                item = label_to_item.get(label)
+                if item:
+                    results.append(ClassifiedEntry(
+                        match_result=item[0],
+                        gl_category=GLCategory.UNCLASSIFIED,
+                        classification_path="llm",
+                        rule_name="llm_classification",
+                        reasoning=f"Parse error: {e}",
+                    ))
+                    responded_labels.add(label)
+            except Exception:
+                pass
+
+    # Handle records missing from response
+    for label, item in label_to_item.items():
+        if label not in responded_labels:
+            match, _, _ = item
+            results.append(ClassifiedEntry(
+                match_result=match,
+                gl_category=GLCategory.UNCLASSIFIED,
+                classification_path="llm",
+                rule_name="llm_classification",
+                reasoning="Not included in LLM response",
+            ))
+
+    return results
+
+
+def _call_llm_classification(
+    client,
+    prompt: str,
+    *,
+    _last_call_time: list = [],
+    min_interval: float = 13.0,
+    max_retries: int = 5,
+) -> tuple:
+    """Call Gemini for classification with rate limiting.
+
+    Same rate-limiting pattern as Part 3's _call_llm.
+    """
+    import sys
+
+    if _last_call_time:
+        elapsed = time.time() - _last_call_time[0]
+        if elapsed < min_interval:
+            wait = min_interval - elapsed
+            print(f"    [rate-limit] waiting {wait:.1f}s...", file=sys.stderr)
+            time.sleep(wait)
+
+    for attempt in range(max_retries):
+        try:
+            response = client.models.generate_content(
+                model=MODEL,
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    system_instruction=_CLASSIFICATION_SYSTEM_PROMPT,
+                    temperature=0.0,
+                    response_mime_type="application/json",
