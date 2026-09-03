@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Finance Controller — Reconciliation Dashboard</title>
+<style>
+:root {
+  --bg: #0f1117;
+  --surface: #1a1d27;
+  --surface2: #242836;
+  --border: #2e3347;
+  --text: #e4e7f0;
+  --text-dim: #8b8fa3;
+  --accent: #6c5ce7;
+  --accent-light: #a29bfe;
+  --green: #00b894;
+  --green-dim: #00b89433;
+  --red: #ff6b6b;
+  --red-dim: #ff6b6b22;
+  --orange: #fdcb6e;
+  --orange-dim: #fdcb6e22;
+  --blue: #74b9ff;
+  --blue-dim: #74b9ff22;
+  --font: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+  --mono: 'Cascadia Code', 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  padding: 2rem;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+h1 {
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  background: linear-gradient(135deg, var(--accent-light), var(--blue));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.subtitle {
+  color: var(--text-dim);
+  font-size: 0.9rem;
+  margin-bottom: 2rem;
+}
+
+/* ── KPI Cards ────────────────────────────────────── */
+
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.kpi-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.25rem;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.kpi-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+}
+
+.kpi-card .label {
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.5rem;
+}
+
+.kpi-card .value {
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.kpi-card.green .value { color: var(--green); }
+.kpi-card.red .value { color: var(--red); }
+.kpi-card.blue .value { color: var(--blue); }
+.kpi-card.orange .value { color: var(--orange); }
+.kpi-card.accent .value { color: var(--accent-light); }
+
+/* ── Match rate ring ──────────────────────────────── */
+
+.match-rate-container {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.ring-chart {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: conic-gradient(
+    var(--green) 0% 80.0%,
+    var(--surface2) 80.0% 100%
+  );
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.ring-chart::after {
+  content: '';
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--surface);
+  position: absolute;
+}
+
+.ring-chart .ring-value {
+  position: relative;
+  z-index: 1;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--green);
+}
+
+/* ── Section containers ───────────────────────────── */
+
+.section {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.section h2 {
+  font-size: 1.15rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: var(--accent-light);
+}
+
+/* ── Tables ───────────────────────────────────────── */
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+thead th {
+  background: var(--surface2);
+  color: var(--text-dim);
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  padding: 0.75rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+
+thead th:hover {
+  color: var(--accent-light);
+}
+
+thead th .sort-arrow {
+  margin-left: 0.3em;
+  opacity: 0.3;
+}
+
+thead th.sorted .sort-arrow {
+  opacity: 1;
+  color: var(--accent-light);
+}
+
+tbody td {
+  padding: 0.6rem 1rem;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+
+tbody tr:hover {
+  background: var(--surface2);
+}
+
+.reason-cell {
+  max-width: 500px;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+/* ── Filter bar ───────────────────────────────────── */
+
+.filter-bar {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.filter-bar input,
+.filter-bar select {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 0.85rem;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.filter-bar input:focus,
+.filter-bar select:focus {
+  border-color: var(--accent);
+}
+
+.filter-bar input { flex: 1; min-width: 200px; }
+
+/* ── Breakdown bars ───────────────────────────────── */
+
+.breakdown-list {
+  list-style: none;
+}
+
+.breakdown-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.breakdown-label {
+  width: 200px;
+  font-size: 0.85rem;
+  color: var(--text);
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.breakdown-bar-container {
+  flex: 1;
+  background: var(--surface2);
+  border-radius: 6px;
+  height: 28px;
+  overflow: hidden;
+  position: relative;
+}
+
+.breakdown-bar {
+  height: 100%;
+  border-radius: 6px;
+  transition: width 0.6s ease;
+  display: flex;
+  align-items: center;
+  padding-left: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: white;
+  min-width: 2rem;
+}
+
+.breakdown-count {
+  width: 40px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-dim);
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* ── Badge ────────────────────────────────────────── */
+
+.badge {
+  display: inline-block;
+  padding: 0.15em 0.6em;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-family: var(--mono);
+}
+
+.badge-rule { background: var(--green-dim); color: var(--green); }
+.badge-llm { background: var(--blue-dim); color: var(--blue); }
+.badge-exception { background: var(--red-dim); color: var(--red); }
+.badge-internal { background: var(--orange-dim); color: var(--orange); }
+.badge-external { background: var(--accent-light)22; color: var(--accent-light); }
+
+/* ── Responsive ───────────────────────────────────── */
+
+@media (max-width: 768px) {
+  body { padding: 1rem; }
+  .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+  .breakdown-label { width: 120px; font-size: 0.75rem; }
+  table { font-size: 0.75rem; }
+  thead th, tbody td { padding: 0.4rem 0.5rem; }
+}
+</style>
+</head>
+<body>
+
+<h1>AI Finance Controller</h1>
+<p class="subtitle">Reconciliation Dashboard &mdash; read-only view of pipeline results</p>
+
+<!-- KPI Cards -->
+<div class="kpi-grid">
+  <div class="kpi-card green">
+    <div class="label">Match Rate</div>
+    <div class="match-rate-container">
+      <div class="ring-chart"><span class="ring-value">80%</span></div>
+      <div><div class="value">52/65</div><div class="label" style="margin:0">internal matched</div></div>
+    </div>
+  </div>
+  <div class="kpi-card blue">
+    <div class="label">Rule Matches</div>
+    <div class="value">45</div>
+  </div>
+  <div class="kpi-card accent">
+    <div class="label">LLM Matches</div>
+    <div class="value">7</div>
+  </div>
+  <div class="kpi-card red">
+    <div class="label">Exceptions</div>
+    <div class="value">16</div>
+  </div>
+  <div class="kpi-card orange">
+    <div class="label">External Records</div>
+    <div class="value">55</div>
+  </div>
+  <div class="kpi-card" style="border-left: 3px solid var(--text-dim);">
+    <div class="label">Parse Errors</div>
+    <div class="value">0</div>
+  </div>
+</div>
+
+<!-- GL Category Breakdown -->
+<div class="section">
+  <h2>GL Category Breakdown</h2>
+  <ul class="breakdown-list" id="gl-breakdown"></ul>
+</div>
+
+<!-- Rule Breakdown -->
+<div class="section">
+  <h2>Matching Rule Distribution</h2>
+  <ul class="breakdown-list" id="rule-breakdown"></ul>
+</div>
+
+<!-- Exceptions Table -->
+<div class="section">
+  <h2>What Broke &mdash; Exception Details</h2>
+  <div class="filter-bar">
+    <input type="text" id="exc-search" placeholder="Search by ID or reason...">
+    <select id="exc-type-filter">
+      <option value="">All types</option>
+      <option value="unmatched_internal">Unmatched Internal</option>
+      <option value="unmatched_external">Unmatched External</option>
+      <option value="parse_error">Parse Error</option>
+    </select>
+  </div>
+  <table id="exc-table">
+    <thead>
+      <tr>
+        <th data-col="record_id">ID <span class="sort-arrow">&#x25B4;</span></th>
+        <th data-col="record_type">Type <span class="sort-arrow">&#x25B4;</span></th>
+        <th data-col="reason">Reason <span class="sort-arrow">&#x25B4;</span></th>
+      </tr>
+    </thead>
+    <tbody id="exc-body"></tbody>
+  </table>
+</div>
+
+<!-- Matched Records Table -->
+<div class="section">
+  <h2>Matched Records</h2>
+  <div class="filter-bar">
+    <input type="text" id="match-search" placeholder="Search by ID, rule, or detail...">
+    <select id="match-path-filter">
+      <option value="">All paths</option>
+      <option value="rule">Rule</option>
+      <option value="llm">LLM</option>
+    </select>
+  </div>
+  <table id="match-table">
+    <thead>
+      <tr>
+        <th data-col="record_id">Internal ID <span class="sort-arrow">&#x25B4;</span></th>
+        <th data-col="matched_to">External ID <span class="sort-arrow">&#x25B4;</span></th>
+        <th data-col="resolution_path">Path <span class="sort-arrow">&#x25B4;</span></th>
+        <th data-col="rule_name">Rule <span class="sort-arrow">&#x25B4;</span></th>
+        <th data-col="confidence">Conf <span class="sort-arrow">&#x25B4;</span></th>
+        <th data-col="detail">Detail <span class="sort-arrow">&#x25B4;</span></th>
+      </tr>
+    </thead>
+    <tbody id="match-body"></tbody>
+  </table>
+</div>
+
+<script>
+// ── Embedded Data ───────────────────────────────────
+const EXCEPTIONS = [{"record_id": "TXN_007", "record_type": "unmatched_internal", "reason": "LLM evaluated candidates and rejected all: No matching external: amount 8234.56 INR not found in any candidate with compatible ref/date", "attempted_matches": [{"match_path": "llm", "decision": "NONE", "confidence": 0.0, "reasoning": "No matching external: amount 8234.56 INR not found in any candidate with compatible ref/date"}], "timestamp": "2026-09-01T23:36:11.824477"}, {"record_id": "TXN_009", "record_type": "unmatched_internal", "reason": "LLM evaluated candidates and rejected all: No matching external: ref pay_abc123 not in candidate pool, amount 3421.78 INR unmatched", "attempted_matches": [{"match_path": "llm", "decision": "NONE", "confidence": 0.0, "reasoning": "No matching external: ref pay_abc123 not in candidate pool, amount 3421.78 INR unmatched"}], "timestamp": "2026-09-01T23:36:11.824477"}, {"record_id": "TXN_010", "record_type": "unmatched_internal", "reason": "LLM evaluated candidates and rejected all: No matching external: settlement 12567.90 INR on 2026-08-03 has no compatible bank entry", "attempted_matches": [{"match_path": "llm", "decision": "NONE", "confidence": 0.0, "reasoning": "No matching external: settlement 12567.90 INR on 2026-08-03 has no compatible bank entry"}], "timestamp": "2026-09-01T23:36:11.824477"}, {"record_id": "TXN_017", "record_type": "unmatched_internal", "reason": "LLM evaluated candidates and rejected all: No matching external: payment 4592.33 INR on 2026-08-05 not in any candidate pool", "attempted_matches": [{"match_path": "llm", "decision": "NONE", "confidence": 0.0, "reasoning": "No matching external: payment 4592.33 INR on 2026-08-05 not in any candidate pool"}], "timestamp": "2026-09-01T23:36:11.824477"}, {"record_id": "TXN_019", "record_type": "unmatched_internal", "reason": "LLM evaluated candidates and rejected all: No matching external: refund 1823.45 INR on 2026-08-06 has no compatible bank entry", "attempted_matches": [{"match_path": "llm", "decision": "NONE", "confidence": 0.0, "reasoning": "No matching external: refund 1823.45 INR on 2026-08-06 has no compatible bank entry"}], "timestamp": "2026-09-01T23:36:11.824477"}, {"record_id": "TXN_025", "record_type": "unmatched_internal", "reason": "LLM evaluated candidates and rejected all: No matching external: settlement 6789.12 INR on 2026-08-11 not in candidate pool", "attempted_matches": [{"match_path": "llm", "decision": "NONE", "confidence": 0.0, "reasoning": "No matching external: settlement 6789.12 INR on 2026-08-11 not in candidate pool"}], "timestamp": "2026-09-01T23:36:11.824477"}, {"record_id": "TXN_036", "record_type": "unmatched_internal", "reason": "LLM evaluated candidates and rejected all: Evaluated 3 candidates: none match on ref+amount+date combination. Closest candidate differs by 45% in amount", "attempted_matches": [{"match_path": "llm", "decision": "NONE", "confidence": 1.0, "reasoning": "Evaluated 3 candidates: none match on ref+amount+date combination. Closest candidate differs by 45% in amount"}], "timestamp": "2026-09-01T23:36:11.824477"}, {"record_id": "TXN_039", "record_type": "unmatched_internal", "reason": "LLM evaluated candidates and rejected all: Evaluated 2 candidates: ref mismatch on both, amounts incompatible (>30% difference)", "attempted_matches": [{"match_path": "llm", "decision": "NONE", "confidence": 1.0, "reasoning": "Evaluated 2 candidates: ref mismatch on both, amounts incompatible (>30% difference)"}], "timestamp": "2026-09-01T23:36:11.824477"}, {"record_id": "TXN_043", "record_type": "unmatched_internal", "reason": "LLM evaluated candidates and rejected all: Evaluated 4 candidates: date and merchant mismatches on all. No viable match", "attempted_matches": [{"match_path": "llm", "decision": "NONE", "confidence": 1.0, "reasoning": "Evaluated 4 candidates: date and merchant mismatches on all. No viable match"}], "timestamp": "2026-09-01T23:36:11.824477"}, {"record_id": "TXN_044", "record_type": "unmatched_internal", "reason": "LLM evaluated candidates and rejected all: No matching external: payment 2345.67 INR on 2026-08-22 not found in candidate pool", "attempted_matches": [{"match_path": "llm", "decision": "NONE", "confidence": 0.0, "reasoning": "No matching external: payment 2345.67 INR on 2026-08-22 not found in candidate pool"}], "timestamp": "2026-09-01T23:36:11.824477"}, {"record_id": "TXN_047", "record_type": "unmatched_internal", "reason": "LLM evaluated candidates and rejected all: No matching external: settlement 5678.90 INR on 2026-08-24 has no compatible bank entry", "attempted_matches": [{"match_path": "llm", "decision": "NONE", "confidence": 0.0, "reasoning": "No matching external: settlement 5678.90 INR on 2026-08-24 has no compatible bank entry"}], "timestamp": "2026-09-01T23:36:11.824477"}, {"record_id": "TXN_055", "record_type": "unmatched_internal", "reason": "No matching external record for TXN_055 (payment, 4754.37 INR, 2026-08-02, merchant=Rapido Bike Taxi): all shortlist candidates were already claimed by earlier matches", "attempted_matches": [], "timestamp": "2026-09-01T23:36:11.824477"}, {"record_id": "TXN_064", "record_type": "unmatched_internal", "reason": "No matching external record for TXN_064 (payment, 117.79 INR, 2026-08-25, merchant=BookMyShow Internet Pvt Ltd): all shortlist candidates were already claimed by earlier matches", "attempted_matches": [], "timestamp": "2026-09-01T23:36:11.824477"}, {"record_id": "EXT_053", "record_type": "unmatched_external", "reason": "External record EXT_053 not claimed by any internal match: 423.93 INR on 2026-08-14, no reference ID, description=\"Bank charges - Account maintenance fee Q3 2026\" (format A). No internal record references this entry with compatible amount/date", "attempted_matches": [], "timestamp": "2026-09-01T23:36:11.824477"}, {"record_id": "EXT_054", "record_type": "unmatched_external", "reason": "External record EXT_054 not claimed by any internal match: 285.21 INR on 2026-08-17, no reference ID, description=\"Interest credit - Current account\" (format C). No internal record references this entry with compatible amount/date", "attempted_matches": [], "timestamp": "2026-09-01T23:36:11.824477"}, {"record_id": "EXT_055", "record_type": "unmatched_external", "reason": "External record EXT_055 not claimed by any internal match: 230.59 INR on 2026-08-16, ref=GST3302307310, description=\"GST TDS deduction - Government of India\" (format A). No internal record references this entry with compatible amount/date", "attempted_matches": [], "timestamp": "2026-09-01T23:36:11.824477"}];
+const MATCH_ENTRIES = [{"record_id": "TXN_001", "record_type": "internal", "resolution_path": "rule", "detail": "Rule exact_ref_amount_date: Exact match: ref=setl_brnTP3fAbnFbmO, amount=2521.44, date=2026-08-09", "matched_to": "EXT_029", "confidence": 1.0, "gl_category": "", "rule_name": "exact_ref_amount_date", "timestamp": "2026-09-01T23:36:11.823723"}, {"record_id": "TXN_002", "record_type": "internal", "resolution_path": "rule", "detail": "Rule exact_ref_amount_date: Exact match: ref=setl_jArnVgxwvqcCh5, amount=21588.09, date=2026-08-20", "matched_to": "EXT_005", "confidence": 1.0, "gl_category": "", "rule_name": "exact_ref_amount_date", "timestamp": "2026-09-01T23:36:11.823752"}, {"record_id": "TXN_003", "record_type": "internal", "resolution_path": "rule", "detail": "Rule exact_ref_amount_date: Exact match: ref=setl_RcoreogrNwwmq6, amount=8422.77, date=2026-08-24", "matched_to": "EXT_018", "confidence": 1.0, "gl_category": "", "rule_name": "exact_ref_amount_date", "timestamp": "2026-09-01T23:36:11.823757"}, {"record_id": "TXN_006", "record_type": "internal", "resolution_path": "rule", "detail": "Rule exact_ref_amount_date: Exact match: ref=pay_81aSQHqNgAC72q, amount=15153.63, date=2026-08-04", "matched_to": "EXT_051", "confidence": 1.0, "gl_category": "", "rule_name": "exact_ref_amount_date", "timestamp": "2026-09-01T23:36:11.823762"}, {"record_id": "TXN_011", "record_type": "internal", "resolution_path": "rule", "detail": "Rule exact_ref_amount_date: Exact match: ref=pay_1Id9Z850kEnydx, amount=4028.32, date=2026-08-15", "matched_to": "EXT_024", "confidence": 1.0, "gl_category": "", "rule_name": "exact_ref_amount_date", "timestamp": "2026-09-01T23:36:11.823765"}, {"record_id": "TXN_012", "record_type": "internal", "resolution_path": "rule", "detail": "Rule exact_ref_amount_date: Exact match: ref=pay_79ISjs8JHUdKF0, amount=277.52, date=2026-08-28", "matched_to": "EXT_030", "confidence": 1.0, "gl_category": "", "rule_name": "exact_ref_amount_date", "timestamp": "2026-09-01T23:36:11.823770"}, {"record_id": "TXN_015", "record_type": "internal", "resolution_path": "rule", "detail": "Rule exact_ref_amount_date: Exact match: ref=pay_YsP6ihgIqLSmNq, amount=4586.72, date=2026-08-02", "matched_to": "EXT_013", "confidence": 1.0, "gl_category": "", "rule_name": "exact_ref_amount_date", "timestamp": "2026-09-01T23:36:11.823774"}, {"record_id": "TXN_018", "record_type": "internal", "resolution_path": "rule", "detail": "Rule exact_ref_amount_date: Exact match: ref=setl_zPTpjRxcDm4vY2, amount=135.91, date=2026-08-11", "matched_to": "EXT_008", "confidence": 1.0, "gl_category": "", "rule_name": "exact_ref_amount_date", "timestamp": "2026-09-01T23:36:11.823777"}, {"record_id": "TXN_022", "record_type": "internal", "resolution_path": "rule", "detail": "Rule exact_ref_amount_date: Exact match: ref=pay_3XkfFNuYUPnmbp, amount=20369.79, date=2026-08-15", "matched_to": "EXT_052", "confidence": 1.0, "gl_category": "", "rule_name": "exact_ref_amount_date", "timestamp": "2026-09-01T23:36:11.823781"}, {"record_id": "TXN_023", "record_type": "internal", "resolution_path": "rule", "detail": "Rule exact_ref_amount_date: Exact match: ref=rfnd_JSxyjQ312WnXRC, amount=1711.84, date=2026-08-15", "matched_to": "EXT_047", "confidence": 1.0, "gl_category": "", "rule_name": "exact_ref_amount_date", "timestamp": "2026-09-01T23:36:11.823784"}, {"record_id": "TXN_024", "record_type": "internal", "resolution_path": "rule", "detail": "Rule exact_ref_amount_date: Exact match: ref=rfnd_P9K63LSFZH3UDq, amount=2845.38, date=2026-08-25", "matched_to": "EXT_001", "confidence": 1.0, "gl_category": "", "rule_name": "exact_ref_amount_date", "timestamp": "2026-09-01T23:36:11.823787"}, {"record_id": "TXN_029", "record_type": "internal", "resolution_path": "rule", "detail": "Rule exact_ref_amount_date: Exact match: ref=setl_kLUhY7gbtP7ySe, amount=5873.85, date=2026-08-12", "matched_to": "EXT_010", "confidence": 1.0, "gl_category": "", "rule_name": "exact_ref_amount_date", "timestamp": "2026-09-01T23:36:11.823792"}, {"record_id": "TXN_030", "record_type": "internal", "resolution_path": "rule", "detail": "Rule exact_ref_amount_date: Exact match: ref=rfnd_XJcHPeOaAEAw3C, amount=55529.77, date=2026-08-25", "matched_to": "EXT_028", "confidence": 1.0, "gl_category": "", "rule_name": "exact_ref_amount_date", "timestamp": "2026-09-01T23:36:11.823794"}, {"record_id": "TXN_033", "record_type": "internal", "resolution_path": "rule", "detail": "Rule exact_ref_amount_date: Exact match: ref=setl_wIv9IvCtoStU6Q, amount=2678.89, date=2026-08-24", "matched_to": "EXT_026", "confidence": 1.0, "gl_category": "", "rule_name": "exact_ref_amount_date", "timestamp": "2026-09-01T23:36:11.823797"}, {"record_id": "TXN_034", "record_type": "internal", "resolution_path": "rule", "detail": "Rule exact_ref_amount_date: Exact match: ref=rfnd_GrgmolaHr8IRh1, amount=1576.26, date=2026-08-26", "matched_to": "EXT_034", "confidence": 1.0, "gl_category": "", "rule_name": "exact_ref_amount_date", "timestamp": "2026-09-01T23:36:11.823800"}, {"record_id": "TXN_035", "record_type": "internal", "resolution_path": "rule", "detail": "Rule exact_ref_amount_date: Exact match: ref=pay_v7p1heEJQjY6fp, amount=17126.35, date=2026-08-26", "matched_to": "EXT_015", "confidence": 1.0, "gl_category": "", "rule_name": "exact_ref_amount_date", "timestamp": "2026-09-01T23:36:11.823803"}, {"record_id": "TXN_040", "record_type": "internal", "resolution_path": "rule", "detail": "Rule exact_ref_amount_date: Exact match: ref=pay_Rr6YICtu8zF9OH, amount=282.30, date=2026-08-20", "matched_to": "EXT_033", "confidence": 1.0, "gl_category": "", "rule_name": "exact_ref_amount_date", "timestamp": "2026-09-01T23:36:11.823806"}, {"record_id": "TXN_042", "record_type": "internal", "resolution_path": "rule", "detail": "Rule exact_ref_amount_date: Exact match: ref=pay_SFqZ8pIx5F21rW, amount=4044.73, date=2026-08-09", "matched_to": "EXT_045", "confidence": 1.0, "gl_category": "", "rule_name": "exact_ref_amount_date", "timestamp": "2026-09-01T23:36:11.823810"}, {"record_id": "TXN_048", "record_type": "internal", "resolution_path": "rule", "detail": "Rule exact_ref_amount_date: Exact match: ref=pay_xwsRbZya1W84UZ, amount=9602.37, date=2026-08-26", "matched_to": "EXT_027", "confidence": 1.0, "gl_category": "", "rule_name": "exact_ref_amount_date", "timestamp": "2026-09-01T23:36:11.823813"}, {"record_id": "TXN_050", "record_type": "internal", "resolution_path": "rule", "detail": "Rule exact_ref_amount_date: Exact match: ref=rfnd_wFqk467s1XDeUn, amount=8065.42, date=2026-08-12", "matched_to": "EXT_004", "confidence": 1.0, "gl_category": "", "rule_name": "exact_ref_amount_date", "timestamp": "2026-09-01T23:36:11.823816"}, {"record_id": "TXN_053", "record_type": "internal", "resolution_path": "rule", "detail": "Rule exact_ref_amount_date: Exact match: ref=rfnd_rQnBow8w3Ndr86, amount=503.00, date=2026-08-21", "matched_to": "EXT_048", "confidence": 1.0, "gl_category": "", "rule_name": "exact_ref_amount_date", "timestamp": "2026-09-01T23:36:11.823820"}, {"record_id": "TXN_057", "record_type": "internal", "resolution_path": "rule", "detail": "Rule exact_ref_amount_date: Exact match: ref=pay_AXhO2I1A3zZyTt, amount=12486.02, date=2026-08-05", "matched_to": "EXT_006", "confidence": 1.0, "gl_category": "", "rule_name": "exact_ref_amount_date", "timestamp": "2026-09-01T23:36:11.823824"}, {"record_id": "TXN_063", "record_type": "internal", "resolution_path": "rule", "detail": "Rule exact_ref_amount_date: Exact match: ref=pay_51JJRzhbuXMZ5f, amount=55529.77, date=2026-08-25", "matched_to": "EXT_025", "confidence": 1.0, "gl_category": "", "rule_name": "exact_ref_amount_date", "timestamp": "2026-09-01T23:36:11.823828"}, {"record_id": "TXN_065", "record_type": "internal", "resolution_path": "rule", "detail": "Rule exact_ref_amount_date: Exact match: ref=pay_VEUVB5INM1MjeB, amount=16828.40, date=2026-08-12", "matched_to": "EXT_042", "confidence": 1.0, "gl_category": "", "rule_name": "exact_ref_amount_date", "timestamp": "2026-09-01T23:36:11.823831"}, {"record_id": "TXN_013", "record_type": "internal", "resolution_path": "rule", "detail": "Rule exact_ref_amount_window: Ref match with date drift: ref=pay_e1z6JJcfOJtqPt, amount=3522.61, int_date=2026-08-10, ext_date=2026-08-13", "matched_to": "EXT_014", "confidence": 1.0, "gl_category": "", "rule_name": "exact_ref_amount_window", "timestamp": "2026-09-01T23:36:11.823927"}, {"record_id": "TXN_037", "record_type": "internal", "resolution_path": "rule", "detail": "Rule exact_ref_amount_window: Ref match with date drift: ref=setl_Dcrr1eoqXKXmhn, amount=66331.56, int_date=2026-08-03, ext_date=2026-08-06", "matched_to": "EXT_022", "confidence": 1.0, "gl_category": "", "rule_name": "exact_ref_amount_window", "timestamp": "2026-09-01T23:36:11.823954"}, {"record_id": "TXN_052", "record_type": "internal", "resolution_path": "rule", "detail": "Rule exact_ref_amount_window: Ref match with date drift: ref=setl_hcc9hoHyx6RHKT, amount=21673.86, int_date=2026-08-20, ext_date=2026-08-21", "matched_to": "EXT_036", "confidence": 1.0, "gl_category": "", "rule_name": "exact_ref_amount_window", "timestamp": "2026-09-01T23:36:11.823971"}, {"record_id": "TXN_059", "record_type": "internal", "resolution_path": "rule", "detail": "Rule exact_ref_amount_window: Ref match with date drift: ref=setl_nOng0wVJY08YMN, amount=18156.62, int_date=2026-08-23, ext_date=2026-08-26", "matched_to": "EXT_007", "confidence": 1.0, "gl_category": "", "rule_name": "exact_ref_amount_window", "timestamp": "2026-09-01T23:36:11.823985"}, {"record_id": "TXN_016", "record_type": "internal", "resolution_path": "rule", "detail": "Rule ref_fee_tolerance: Ref match with fee/rounding difference: ref=setl_Zcui8kBRIg6Qjc, int_amount=7961.88, ext_amount=7775.80, diff=2.34%, int_date=2026-08-05, ext_date=2026-08-05", "matched_to": "EXT_023", "confidence": 1.0, "gl_category": "", "rule_name": "ref_fee_tolerance", "timestamp": "2026-09-01T23:36:11.824042"}, {"record_id": "TXN_020", "record_type": "internal", "resolution_path": "rule", "detail": "Rule ref_fee_tolerance: Ref match with fee/rounding difference: ref=rfnd_lcBGYQ6TmA65MP, int_amount=3073.19, ext_amount=2984.47, diff=2.89%, int_date=2026-08-10, ext_date=2026-08-10", "matched_to": "EXT_046", "confidence": 1.0, "gl_category": "", "rule_name": "ref_fee_tolerance", "timestamp": "2026-09-01T23:36:11.824063"}, {"record_id": "TXN_027", "record_type": "internal", "resolution_path": "rule", "detail": "Rule ref_fee_tolerance: Ref match with fee/rounding difference: ref=setl_058H4KPfA1lquC, int_amount=12582.52, ext_amount=12238.52, diff=2.73%, int_date=2026-08-25, ext_date=2026-08-25", "matched_to": "EXT_017", "confidence": 1.0, "gl_category": "", "rule_name": "ref_fee_tolerance", "timestamp": "2026-09-01T23:36:11.824083"}, {"record_id": "TXN_028", "record_type": "internal", "resolution_path": "rule", "detail": "Rule ref_fee_tolerance: Ref match with fee/rounding difference: ref=pay_fbH9vOWOU6mbjh, int_amount=9359.29, ext_amount=9115.06, diff=2.61%, int_date=2026-08-23, ext_date=2026-08-23", "matched_to": "EXT_032", "confidence": 1.0, "gl_category": "", "rule_name": "ref_fee_tolerance", "timestamp": "2026-09-01T23:36:11.824098"}, {"record_id": "TXN_032", "record_type": "internal", "resolution_path": "rule", "detail": "Rule ref_fee_tolerance: Ref match with fee/rounding difference: ref=setl_v2Rra6fSEVQOEX, int_amount=2319.81, ext_amount=2257.45, diff=2.69%, int_date=2026-08-08, ext_date=2026-08-08", "matched_to": "EXT_012", "confidence": 1.0, "gl_category": "", "rule_name": "ref_fee_tolerance", "timestamp": "2026-09-01T23:36:11.824115"}, {"record_id": "TXN_041", "record_type": "internal", "resolution_path": "rule", "detail": "Rule ref_fee_tolerance: Ref match with fee/rounding difference: ref=setl_VmI5BRh8LojIIf, int_amount=1028.60, ext_amount=1000.67, diff=2.72%, int_date=2026-08-27, ext_date=2026-08-27", "matched_to": "EXT_019", "confidence": 1.0, "gl_category": "", "rule_name": "ref_fee_tolerance", "timestamp": "2026-09-01T23:36:11.824131"}, {"record_id": "TXN_061", "record_type": "internal", "resolution_path": "rule", "detail": "Rule ref_fee_tolerance: Ref match with fee/rounding difference: ref=setl_2jUdfBALznFvgQ, int_amount=3502.10, ext_amount=3400.97, diff=2.89%, int_date=2026-08-02, ext_date=2026-08-02", "matched_to": "EXT_009", "confidence": 1.0, "gl_category": "", "rule_name": "ref_fee_tolerance", "timestamp": "2026-09-01T23:36:11.824152"}, {"record_id": "TXN_062", "record_type": "internal", "resolution_path": "rule", "detail": "Rule ref_fee_tolerance: Ref match with fee/rounding difference: ref=pay_LasnipuaUkxRFZ, int_amount=436.79, ext_amount=425.13, diff=2.67%, int_date=2026-08-02, ext_date=2026-08-02", "matched_to": "EXT_038", "confidence": 1.0, "gl_category": "", "rule_name": "ref_fee_tolerance", "timestamp": "2026-09-01T23:36:11.824168"}, {"record_id": "TXN_004", "record_type": "internal", "resolution_path": "rule", "detail": "Rule amount_date_unique: Amount+date match, bidirectionally unique: amount=2746.54, date=2026-08-29, no ref on external (ext has ref='pay_x')", "matched_to": "EXT_016", "confidence": 0.95, "gl_category": "", "rule_name": "amount_date_unique", "timestamp": "2026-09-01T23:36:11.824193"}, {"record_id": "TXN_008", "record_type": "internal", "resolution_path": "rule", "detail": "Rule amount_date_unique: Amount+date match, bidirectionally unique: amount=1083.39, date=2026-08-04, no ref on external (ext has ref=None)", "matched_to": "EXT_021", "confidence": 0.95, "gl_category": "", "rule_name": "amount_date_unique", "timestamp": "2026-09-01T23:36:11.824202"}, {"record_id": "TXN_014", "record_type": "internal", "resolution_path": "rule", "detail": "Rule amount_date_unique: Amount+date match, bidirectionally unique: amount=24744.66, date=2026-08-21, no ref on external (ext has ref='pay_Ue')", "matched_to": "EXT_011", "confidence": 0.95, "gl_category": "", "rule_name": "amount_date_unique", "timestamp": "2026-09-01T23:36:11.824207"}, {"record_id": "TXN_038", "record_type": "internal", "resolution_path": "rule", "detail": "Rule amount_date_unique: Amount+date match, bidirectionally unique: amount=152.02, date=2026-08-22, no ref on external (ext has ref='pay_tU')", "matched_to": "EXT_050", "confidence": 0.95, "gl_category": "", "rule_name": "amount_date_unique", "timestamp": "2026-09-01T23:36:11.824213"}, {"record_id": "TXN_046", "record_type": "internal", "resolution_path": "rule", "detail": "Rule amount_date_unique: Amount+date match, bidirectionally unique: amount=55985.52, date=2026-08-08, no ref on external (ext has ref=None)", "matched_to": "EXT_039", "confidence": 0.95, "gl_category": "", "rule_name": "amount_date_unique", "timestamp": "2026-09-01T23:36:11.824219"}, {"record_id": "TXN_049", "record_type": "internal", "resolution_path": "rule", "detail": "Rule amount_date_unique: Amount+date match, bidirectionally unique: amount=8512.80, date=2026-08-05, no ref on external (ext has ref=None)", "matched_to": "EXT_044", "confidence": 0.95, "gl_category": "", "rule_name": "amount_date_unique", "timestamp": "2026-09-01T23:36:11.824222"}, {"record_id": "TXN_056", "record_type": "internal", "resolution_path": "rule", "detail": "Rule amount_date_unique: Amount+date match, bidirectionally unique: amount=3188.26, date=2026-08-10, no ref on external (ext has ref=None)", "matched_to": "EXT_049", "confidence": 0.95, "gl_category": "", "rule_name": "amount_date_unique", "timestamp": "2026-09-01T23:36:11.824228"}, {"record_id": "TXN_058", "record_type": "internal", "resolution_path": "rule", "detail": "Rule amount_date_unique: Amount+date match, bidirectionally unique: amount=55020.50, date=2026-08-12, no ref on external (ext has ref=None)", "matched_to": "EXT_031", "confidence": 0.95, "gl_category": "", "rule_name": "amount_date_unique", "timestamp": "2026-09-01T23:36:11.824231"}, {"record_id": "TXN_060", "record_type": "internal", "resolution_path": "rule", "detail": "Rule amount_date_unique: Amount+date match, bidirectionally unique: amount=3747.18, date=2026-08-25, no ref on external (ext has ref=None)", "matched_to": "EXT_037", "confidence": 0.95, "gl_category": "", "rule_name": "amount_date_unique", "timestamp": "2026-09-01T23:36:11.824234"}, {"record_id": "TXN_005", "record_type": "internal", "resolution_path": "llm", "detail": "LLM match (confidence=0.95): Ref match + date + merchant match, partial refund -- bank amount is net after refund deduction", "matched_to": "EXT_020", "confidence": 0.95, "gl_category": "", "rule_name": "llm_single", "timestamp": "2026-09-01T23:36:11.824603"}, {"record_id": "TXN_021", "record_type": "internal", "resolution_path": "llm", "detail": "LLM match (confidence=0.95): Exact match on amount (5873.85 INR) and transaction date (2026-08-12).", "matched_to": "EXT_002", "confidence": 0.95, "gl_category": "", "rule_name": "llm_group_assignment", "timestamp": "2026-09-01T23:36:11.824609"}, {"record_id": "TXN_026", "record_type": "internal", "resolution_path": "llm", "detail": "LLM match (confidence=0.95): Ref match + date + merchant match, partial refund -- bank amount is net after refund deduction", "matched_to": "EXT_043", "confidence": 0.95, "gl_category": "", "rule_name": "llm_batch", "timestamp": "2026-09-01T23:36:11.824612"}, {"record_id": "TXN_031", "record_type": "internal", "resolution_path": "llm", "detail": "LLM match (confidence=0.95): Ref match + date + merchant match, partial refund -- bank amount is net after refund deduction", "matched_to": "EXT_003", "confidence": 0.95, "gl_category": "", "rule_name": "llm_batch", "timestamp": "2026-09-01T23:36:11.824614"}, {"record_id": "TXN_045", "record_type": "internal", "resolution_path": "llm", "detail": "LLM match (confidence=0.98): Exact match on amount (1576.26 INR), date (2026-08-26), and clear merchant match", "matched_to": "EXT_035", "confidence": 0.98, "gl_category": "", "rule_name": "llm_batch", "timestamp": "2026-09-01T23:36:11.824617"}, {"record_id": "TXN_051", "record_type": "internal", "resolution_path": "llm", "detail": "LLM match (confidence=0.95): Exact amount match, 3-day settlement window date drift", "matched_to": "EXT_040", "confidence": 0.95, "gl_category": "", "rule_name": "llm_batch", "timestamp": "2026-09-01T23:36:11.824619"}, {"record_id": "TXN_054", "record_type": "internal", "resolution_path": "llm", "detail": "LLM match (confidence=0.92): Ref match + date + merchant match, partial refund -- bank amount is net after refund deduction", "matched_to": "EXT_041", "confidence": 0.92, "gl_category": "", "rule_name": "llm_batch", "timestamp": "2026-09-01T23:36:11.824621"}];
+const GL_COUNTS = {"Settlement Income": 40, "Customer Refund": 12};
+const RULE_COUNTS = {"exact_ref_amount_date": 24, "amount_date_unique": 9, "ref_fee_tolerance": 8, "llm_batch": 5, "exact_ref_amount_window": 4, "llm_single": 1, "llm_group_assignment": 1};
+
+// ── Breakdown Bars ──────────────────────────────────
+const BAR_COLORS = [
+  '#6c5ce7', '#00b894', '#74b9ff', '#fdcb6e', '#ff6b6b',
+  '#a29bfe', '#55efc4', '#0984e3', '#e17055', '#d63031'
+];
+
+function renderBreakdown(containerId, counts) {
+  const el = document.getElementById(containerId);
+  const maxVal = Math.max(...Object.values(counts));
+  let i = 0;
+  for (const [label, count] of Object.entries(counts)) {
+    const pct = (count / maxVal * 100).toFixed(1);
+    const color = BAR_COLORS[i % BAR_COLORS.length];
+    el.innerHTML += `
+      <li class="breakdown-item">
+        <span class="breakdown-label">${label}</span>
+        <div class="breakdown-bar-container">
+          <div class="breakdown-bar" style="width:${pct}%;background:${color}">${count}</div>
+        </div>
+        <span class="breakdown-count">${count}</span>
+      </li>`;
+    i++;
+  }
+}
+
+renderBreakdown('gl-breakdown', GL_COUNTS);
+renderBreakdown('rule-breakdown', RULE_COUNTS);
+
+// ── Table Rendering & Sorting ───────────────────────
+function escapeHtml(str) {
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+function badgeClass(type) {
+  if (type === 'rule') return 'badge-rule';
+  if (type === 'llm') return 'badge-llm';
+  if (type === 'exception') return 'badge-exception';
+  if (type.includes('internal')) return 'badge-internal';
+  if (type.includes('external')) return 'badge-external';
+  return '';
+}
+
+// ── Exception Table ─────────────────────────────────
+let excSortCol = 'record_id', excSortAsc = true;
+let excFiltered = [...EXCEPTIONS];
+
+function renderExcTable() {
+  const tbody = document.getElementById('exc-body');
+  tbody.innerHTML = excFiltered.map(e => `
+    <tr>
+      <td><code>${escapeHtml(e.record_id)}</code></td>
+      <td><span class="badge ${badgeClass(e.record_type)}">${escapeHtml(e.record_type)}</span></td>
+      <td class="reason-cell">${escapeHtml(e.reason)}</td>
+    </tr>
+  `).join('');
+}
+
+function filterExceptions() {
+  const search = document.getElementById('exc-search').value.toLowerCase();
+  const typeFilter = document.getElementById('exc-type-filter').value;
+  excFiltered = EXCEPTIONS.filter(e => {
+    if (typeFilter && e.record_type !== typeFilter) return false;
+    if (search) {
+      return e.record_id.toLowerCase().includes(search) ||
+             e.reason.toLowerCase().includes(search);
+    }
+    return true;
+  });
+  sortExcTable(excSortCol, false);
+}
+
+function sortExcTable(col, toggle = true) {
+  if (toggle) {
+    if (excSortCol === col) excSortAsc = !excSortAsc;
+    else { excSortCol = col; excSortAsc = true; }
+  }
+  excFiltered.sort((a, b) => {
+    const va = (a[col] || '').toString().toLowerCase();
+    const vb = (b[col] || '').toString().toLowerCase();
+    return excSortAsc ? va.localeCompare(vb) : vb.localeCompare(va);
+  });
+  // Update sort arrows
+  document.querySelectorAll('#exc-table th').forEach(th => {
+    th.classList.toggle('sorted', th.dataset.col === excSortCol);
+    const arrow = th.querySelector('.sort-arrow');
+    if (arrow) arrow.textContent = (th.dataset.col === excSortCol && !excSortAsc) ? '\u25BE' : '\u25B4';
+  });
+  renderExcTable();
+}
+
+document.getElementById('exc-search').addEventListener('input', filterExceptions);
+document.getElementById('exc-type-filter').addEventListener('change', filterExceptions);
+document.querySelectorAll('#exc-table th').forEach(th => {
+  th.addEventListener('click', () => sortExcTable(th.dataset.col));
+});
+
+sortExcTable('record_id', false);
+
+// ── Match Table ─────────────────────────────────────
+let matchSortCol = 'record_id', matchSortAsc = true;
+let matchFiltered = [...MATCH_ENTRIES];
+
+function renderMatchTable() {
+  const tbody = document.getElementById('match-body');
+  tbody.innerHTML = matchFiltered.map(e => `
+    <tr>
+      <td><code>${escapeHtml(e.record_id)}</code></td>
+      <td><code>${escapeHtml(e.matched_to || '')}</code></td>
+      <td><span class="badge ${badgeClass(e.resolution_path)}">${e.resolution_path}</span></td>
+      <td><code>${escapeHtml(e.rule_name || '')}</code></td>
+      <td>${e.confidence.toFixed(2)}</td>
+      <td class="reason-cell">${escapeHtml(e.detail)}</td>
+    </tr>
+  `).join('');
+}
+
+function filterMatches() {
+  const search = document.getElementById('match-search').value.toLowerCase();
+  const pathFilter = document.getElementById('match-path-filter').value;
+  matchFiltered = MATCH_ENTRIES.filter(e => {
+    if (pathFilter && e.resolution_path !== pathFilter) return false;
+    if (search) {
+      return e.record_id.toLowerCase().includes(search) ||
+             (e.matched_to || '').toLowerCase().includes(search) ||
+             (e.rule_name || '').toLowerCase().includes(search) ||
+             e.detail.toLowerCase().includes(search);
+    }
+    return true;
+  });
+  sortMatchTable(matchSortCol, false);
+}
+
+function sortMatchTable(col, toggle = true) {
+  if (toggle) {
+    if (matchSortCol === col) matchSortAsc = !matchSortAsc;
+    else { matchSortCol = col; matchSortAsc = true; }
+  }
+  matchFiltered.sort((a, b) => {
+    let va = a[col], vb = b[col];
+    if (typeof va === 'number') return matchSortAsc ? va - vb : vb - va;
+    va = (va || '').toString().toLowerCase();
+    vb = (vb || '').toString().toLowerCase();
+    return matchSortAsc ? va.localeCompare(vb) : vb.localeCompare(va);
+  });
+  document.querySelectorAll('#match-table th').forEach(th => {
+    th.classList.toggle('sorted', th.dataset.col === matchSortCol);
+    const arrow = th.querySelector('.sort-arrow');
+    if (arrow) arrow.textContent = (th.dataset.col === matchSortCol && !matchSortAsc) ? '\u25BE' : '\u25B4';
+  });
+  renderMatchTable();
+}
+
+document.getElementById('match-search').addEventListener('input', filterMatches);
+document.getElementById('match-path-filter').addEventListener('change', filterMatches);
+document.querySelectorAll('#match-table th').forEach(th => {
+  th.addEventListener('click', () => sortMatchTable(th.dataset.col));
+});
+
+sortMatchTable('record_id', false);
+</script>
+</body>
+</html>

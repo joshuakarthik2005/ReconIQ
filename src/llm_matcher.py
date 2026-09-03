@@ -812,4 +812,3 @@ def run_llm_matching(
         llm_output_tokens=total_out_tokens,
         elapsed_seconds=elapsed,
     )
-# _version: claim-ordering-noted
