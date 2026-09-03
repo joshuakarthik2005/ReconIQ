@@ -1,8 +1,6 @@
 """Quick analysis of the 7 residual records and 9 amount_date_unique matches."""
 import json, sys
-from decimal import Decimal
 from pathlib import Path
-from collections import Counter
 
 sys.path.insert(0, ".")
 from src.ingestion import parse_internal, parse_all_external

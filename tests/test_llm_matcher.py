@@ -16,8 +16,6 @@ Run:  python -m pytest tests/test_llm_matcher.py -v
 import json
 import os
 import sys
-import time
-from collections import Counter
 from pathlib import Path
 
 import pytest

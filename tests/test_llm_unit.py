@@ -9,7 +9,6 @@ Run:  python -m pytest tests/test_llm_unit.py -v
 
 import json
 import sys
-from collections import Counter
 from decimal import Decimal
 from pathlib import Path
 
@@ -25,11 +24,9 @@ from src.llm_matcher import (
     _detect_ambiguity_groups,
     _distinctive_words,
     _parse_single_response,
-    _parse_group_response,
-    _AmbiguityGroup,
     _DESCRIPTION_STOPWORDS,
 )
-from src.schemas import ExternalTransaction, MatchPath
+from src.schemas import ExternalTransaction
 
 DATA_DIR = PROJECT_ROOT / "data"
 

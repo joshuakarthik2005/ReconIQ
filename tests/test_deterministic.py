@@ -12,8 +12,6 @@ Run:  python -m pytest tests/test_deterministic.py -v
 
 import json
 import sys
-import time
-from collections import Counter
 from decimal import Decimal
 from pathlib import Path
 

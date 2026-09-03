@@ -16,7 +16,6 @@ Run:  python -m pytest tests/test_llm_mock.py -v
 import json
 import re
 import sys
-import time
 from pathlib import Path
 from unittest.mock import patch, MagicMock
 
@@ -59,8 +58,8 @@ def pipeline_data():
 def mock_result(pipeline_data):
     """Run LLM matching with mock API responses."""
     _, _, det, gt = pipeline_data
-    gt_lookup = {m["internal_id"]: m["external_id"] for m in gt["matches"]}
-    gt_unmatched_int = set(gt["unmatched_internal"])
+    {m["internal_id"]: m["external_id"] for m in gt["matches"]}
+    set(gt["unmatched_internal"])
     residual_int_ids = {r.txn_id for r in det.residual_internal}
 
     expected_llm_matches = {}

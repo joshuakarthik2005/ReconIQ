@@ -1,6 +1,5 @@
 """Rule 4 + Rule 5 analysis against actual dataset."""
-import json, csv, sys
-from decimal import Decimal
+import json, sys
 from collections import defaultdict
 from pathlib import Path
 

@@ -33,7 +33,7 @@ from src.ingestion import (
     _to_decimal_2dp,
     TWO_DP,
 )
-from src.schemas import InternalTransaction, ExternalTransaction, ParseError
+from src.schemas import InternalTransaction, ExternalTransaction
 
 DATA_DIR = PROJECT_ROOT / "data"
 REPORTS_DIR = PROJECT_ROOT / "reports"

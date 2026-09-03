@@ -17,8 +17,6 @@ Tests cover:
 
 import json
 import sys
-import tempfile
-from decimal import Decimal
 from pathlib import Path
 
 import pytest
@@ -29,14 +27,11 @@ sys.path.insert(0, str(PROJECT_ROOT))
 from src.ingestion import parse_internal, parse_all_external
 from src.deterministic_matcher import run_deterministic_matching
 from src.gl_classifier import run_gl_classification
-from src.exceptions import collect_exceptions, save_exceptions, ExceptionReport
+from src.exceptions import collect_exceptions, save_exceptions
 from src.audit import build_audit_trail, save_audit_trail
 from src.schemas import (
-    ExceptionRecord,
-    AuditEntry,
     MatchPath,
     MatchResult,
-    ParseError,
 )
 
 DATA_DIR = PROJECT_ROOT / "data"
@@ -211,7 +206,7 @@ class TestFullAccounting:
     def test_external_accounting(self, exception_report):
         """52 matched + 3 unmatched == 55 total externals."""
         assert exception_report.external_count == 55
-        total = exception_report.matched_count + exception_report.unmatched_external
+        exception_report.matched_count + exception_report.unmatched_external
         # matched_count is internal-side; for external we check directly
         assert exception_report.unmatched_external == 3, (
             f"Expected 3 unmatched externals, got "
@@ -303,7 +298,7 @@ class TestReasonQuality:
         reasons = [e.reason for e in ext_exceptions]
         # All 3 reasons should be different (cite different amounts/dates)
         assert len(set(reasons)) == len(reasons), (
-            f"Unmatched external reasons are not unique — identical templates?"
+            "Unmatched external reasons are not unique — identical templates?"
         )
 
     def test_unmatched_externals_cite_specific_data(self, exception_report):

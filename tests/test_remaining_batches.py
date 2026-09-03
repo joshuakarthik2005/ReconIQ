@@ -38,7 +38,6 @@ from src.llm_matcher import (
     _parse_single_response,
     _AmbiguityGroup,
     _SYSTEM_PROMPT,
-    BatchItem,
     DEFAULT_CONFIDENCE_THRESHOLD,
     DEFAULT_MAX_CANDIDATES,
 )
@@ -102,8 +101,8 @@ def pipeline_setup():
 def full_live_results(pipeline_setup):
     """Run all batches live and collect results."""
     det, gt = pipeline_setup
-    gt_lookup = {m["internal_id"]: m["external_id"] for m in gt["matches"]}
-    gt_unmatched_int = set(gt["unmatched_internal"])
+    {m["internal_id"]: m["external_id"] for m in gt["matches"]}
+    set(gt["unmatched_internal"])
 
     key = os.environ.get("GEMINI_API_KEY") or os.environ.get("GOOGLE_API_KEY")
     if not key:

@@ -13,7 +13,6 @@ Run:  python -m pytest tests/test_batch1_live.py -v
 import json
 import os
 import sys
-import time
 from pathlib import Path
 
 import pytest
@@ -30,7 +29,6 @@ from src.llm_matcher import (
     _SYSTEM_PROMPT,
     DEFAULT_CONFIDENCE_THRESHOLD,
     DEFAULT_MAX_CANDIDATES,
-    BatchItem,
 )
 
 DATA_DIR = PROJECT_ROOT / "data"

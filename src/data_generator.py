@@ -30,6 +30,7 @@ import string
 from collections import Counter
 from datetime import datetime, timedelta
 from pathlib import Path
+from typing import Any
 
 # ─── Configuration ───────────────────────────────────────────
 
@@ -185,8 +186,13 @@ def create_match_plan(txns: list[dict]) -> tuple[list[dict], list[str]]:
     matched_idx = indices[:NUM_MATCHED]
     unmatched_idx = indices[NUM_MATCHED:]
 
-    plan = [{"txn": txns[idx], "noise_type": slots[i]}
-            for i, idx in enumerate(matched_idx)]
+    # Explicit Dict[str, Any] annotation: without it, mypy infers each
+    # literal's value type from the {"txn": dict, "noise_type": str} mix
+    # and joins them into something too narrow to index-assign into below.
+    plan: list[dict[str, Any]] = [
+        {"txn": txns[idx], "noise_type": slots[i]}
+        for i, idx in enumerate(matched_idx)
+    ]
 
     # Force duplicate_amount pairs to share amount + date + merchant
     dups = [p for p in plan if p["noise_type"] == "duplicate_amount"]
@@ -414,7 +420,10 @@ def write_format_c(records: list[dict], path: Path) -> None:
     Some fields randomly omitted; reference ID may appear in
     different locations (top-level, nested metadata, or narrative).
     """
-    payload = {
+    # Explicit Dict[str, Any] annotation: a bare dict literal with mixed
+    # value types (str, nested dict, list) makes mypy infer too narrow a
+    # type for "transactions" to .append() a dict into further down.
+    payload: dict[str, Any] = {
         "account_id": "ACC_9876543210",
         "account_type": "CURRENT",
         "statement_period": {

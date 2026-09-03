@@ -17,11 +17,11 @@ gt_noise = {m["internal_id"]: m["noise_type"] for m in gt["matches"]}
 gt_unmatched_int = set(gt["unmatched_internal"])
 gt_unmatched_ext = set(gt["unmatched_external"])
 
-print(f"=== RESIDUAL POOL SIZES ===")
+print("=== RESIDUAL POOL SIZES ===")
 print(f"  residual_internal: {len(output.residual_internal)}")
 print(f"  residual_external: {len(output.residual_external)}")
 
-print(f"\n=== RESIDUAL INTERNAL BREAKDOWN ===")
+print("\n=== RESIDUAL INTERNAL BREAKDOWN ===")
 has_gt_match = []
 no_gt_match = []
 for r in output.residual_internal:
@@ -39,7 +39,7 @@ for iid in no_gt_match:
     in_gt_unmatched = iid in gt_unmatched_int
     print(f"    {iid}  in_gt_unmatched_internal={in_gt_unmatched}")
 
-print(f"\n=== RESIDUAL EXTERNAL BREAKDOWN ===")
+print("\n=== RESIDUAL EXTERNAL BREAKDOWN ===")
 ext_has_match = []
 ext_no_match = []
 for e in output.residual_external:
@@ -58,13 +58,13 @@ for eid in ext_no_match:
     in_gt_unmatched = eid in gt_unmatched_ext
     print(f"    {eid}  in_gt_unmatched_external={in_gt_unmatched}")
 
-print(f"\n=== CONFIRMATION ===")
+print("\n=== CONFIRMATION ===")
 print(f"  GT unmatched internal (13): all in residual? "
       f"{gt_unmatched_int.issubset({r.txn_id for r in output.residual_internal})}")
 print(f"  GT unmatched external (3): all in residual? "
       f"{gt_unmatched_ext.issubset({e.ext_id for e in output.residual_external})}")
 
-print(f"\n=== WALL CLOCK TIME ===")
+print("\n=== WALL CLOCK TIME ===")
 print(f"  Elapsed: {output.elapsed_seconds:.6f}s")
 total = len(int_list) + len(ext_list)
 print(f"  Records: {total}")
