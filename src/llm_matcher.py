@@ -248,3 +248,133 @@ def _fmt_external(ext: ExternalTransaction, index: int) -> str:
     return (
         f"  [{index}] ID: {ext.ext_id}, Ref: {ref}, "
         f"Amount: {ext.amount}, Date: {ext.date}, "
+        f"Format: {ext.source_format}, Description: {desc}"
+    )
+
+
+def _single_prompt(
+    txn: InternalTransaction,
+    candidates: List[ExternalTransaction],
+) -> str:
+    cands = "\n".join(_fmt_external(c, i + 1) for i, c in enumerate(candidates))
+    return (
+        f"INTERNAL RECORD:\n{_fmt_internal(txn)}\n\n"
+        f"CANDIDATE EXTERNAL RECORDS:\n{cands}\n"
+        f"  [NONE] -- No confident match exists\n\n"
+        f"Which candidate (if any) matches this internal record?\n\n"
+        f"Respond with JSON:\n"
+        f'{{"match_index": <1-based integer or null if NONE>, '
+        f'"confidence": <0.0 to 1.0>, '
+        f'"is_partial_refund": <true if the bank amount is net after a partial refund deduction, false otherwise>, '
+        f'"reasoning": "<brief explanation>"}}'
+    )
+
+
+def _group_prompt(group: _AmbiguityGroup) -> str:
+    int_blocks = "\n\n".join(
+        _fmt_internal(txn, chr(65 + i))
+        for i, txn in enumerate(group.internals)
+    )
+    cands = "\n".join(
+        _fmt_external(c, i + 1) for i, c in enumerate(group.candidates)
+    )
+    labels = ", ".join(chr(65 + i) for i in range(len(group.internals)))
+    return (
+        f"GROUP ASSIGNMENT TASK\n"
+        f"Assign each internal record to exactly one external, or NONE.\n"
+        f"Each external can be assigned to AT MOST one internal.\n\n"
+        f"INTERNAL RECORDS:\n{int_blocks}\n\n"
+        f"CANDIDATE EXTERNAL RECORDS:\n{cands}\n"
+        f"  [NONE] -- No confident match\n\n"
+        f"Respond with JSON:\n"
+        f'{{"assignments": [\n'
+        f'  {{"internal_label": "<one of {labels}>", '
+        f'"match_index": <1-based or null>, '
+        f'"confidence": <0.0-1.0>, '
+        f'"is_partial_refund": <true/false>, '
+        f'"reasoning": "<explanation>"}},\n'
+        f"  ... one entry per internal record\n"
+        f"]}}"
+    )
+
+
+# Type alias for batch items: (internal_txn, its_candidates)
+BatchItem = Tuple[InternalTransaction, List[ExternalTransaction]]
+
+
+def _batch_prompt(items: List[BatchItem]) -> str:
+    """
+    Build a prompt for multiple records, each with its OWN scoped candidates.
+
+    Unlike _group_prompt (shared pool), this keeps each record's shortlist
+    separate so the LLM knows which candidates belong to which record.
+    """
+    blocks = []
+    for i, (txn, cands) in enumerate(items):
+        label = chr(65 + i)  # A, B, C, D
+        record_block = _fmt_internal(txn, label)
+        cand_lines = "\n".join(
+            f"    [{label}{j+1}] ID: {c.ext_id}, Ref: {c.reference_id or '(none)'}, "
+            f"Amount: {c.amount}, Date: {c.date}, "
+            f"Format: {c.source_format}, "
+            f"Description: {c.raw_description or c.description or '(none)'}"
+            for j, c in enumerate(cands)
+        )
+        blocks.append(
+            f"RECORD {label}:\n{record_block}\n"
+            f"  Candidates for {label}:\n{cand_lines}\n"
+            f"    [{label}0] NONE -- No confident match"
+        )
+
+    labels = ", ".join(chr(65 + i) for i in range(len(items)))
+    all_blocks = "\n\n".join(blocks)
+    return (
+        f"BATCH MATCHING TASK\n"
+        f"For each internal record, select the best match from ITS OWN candidates,\n"
+        f"or NONE if no candidate is a confident match.\n"
+        f"Each external ID can be assigned to at most one internal record.\n\n"
+        f"{all_blocks}\n\n"
+        f"Respond with JSON:\n"
+        f'{{"matches": [\n'
+        f'  {{"internal_label": "<one of {labels}>", '
+        f'"match_label": "<e.g. A2 or A0 for NONE>", '
+        f'"confidence": <0.0-1.0>, '
+        f'"is_partial_refund": <true/false>, '
+        f'"reasoning": "<explanation>"}},\n'
+        f"  ... one entry per record\n"
+        f"]}}")
+
+
+def _parse_batch_response(
+    raw: str,
+    items: List[BatchItem],
+    confidence_threshold: float,
+) -> List[Tuple[str, Optional[str], float, str, bool]]:
+    """
+    Parse batch response with per-record fault tolerance.
+
+    If one record's entry is malformed, the others are still processed.
+    Returns list of (internal_id, ext_id | None, confidence, reasoning, is_partial_refund).
+    """
+    try:
+        data = json.loads(raw)
+    except json.JSONDecodeError:
+        return [
+            (txn.txn_id, None, 0.0, f"JSON parse error: {raw[:200]}", False)
+            for txn, _ in items
+        ]
+
+    matches_list = data.get("matches", data.get("assignments", []))
+
+    # Build lookup: label -> (txn, candidates)
+    label_to_item = {chr(65 + i): item for i, item in enumerate(items)}
+
+    results: List[Tuple[str, Optional[str], float, str, bool]] = []
+    claimed_in_batch: Set[str] = set()
+
+    for entry in matches_list:
+        try:
+            label = str(entry.get("internal_label", "")).strip().upper()
+            item = label_to_item.get(label)
+            if not item:
+                continue
