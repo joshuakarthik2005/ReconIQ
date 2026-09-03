@@ -227,6 +227,64 @@ def parse_format_a(path: Path) -> Tuple[List[ExternalTransaction], List[ParseErr
     return records, errors
 
 
+def parse_format_b(path: Path) -> Tuple[List[ExternalTransaction], List[ParseError]]:
+    """
+    Parse Format B -- messy semi-structured bank export.
+
+    Columns: Sl.No. | Bank Ref | Txn Ref. | Amt (INR) | Dt. |
+             Particulars | Cr/Dr
+
+    Handles: currency symbols, commas, varied date formats,
+    NEFT/IMPS-prefixed refs, truncated descriptions.
+    """
+    records: List[ExternalTransaction] = []
+    errors: List[ParseError] = []
+
+    with open(path, newline="", encoding="utf-8") as fh:
+        reader = csv.DictReader(fh)
+        for row_num, row in enumerate(reader, start=2):
+            try:
+                # Amount: strip symbols, commas, trailing /-, then Decimal
+                amount = _to_decimal_2dp(row["Amt (INR)"])
+
+                # Cr/Dr sign
+                cr_dr = row.get("Cr/Dr", "").strip().lower()
+                if cr_dr == "dr":
+                    amount = -amount
+
+                # Date: flexible multi-format parse
+                date_str = _normalize_date(row["Dt."])
+
+                # Reference: clean prefixes and whitespace
+                ref = _clean_ref(row.get("Txn Ref.", ""))
+
+                # Bank's own transaction ID
+                ext_id = row.get("Bank Ref", "").strip()
+
+                desc = row.get("Particulars", "")
+
+                records.append(ExternalTransaction(
+                    ext_id=ext_id,
+                    reference_id=ref,
+                    amount=amount,
+                    date=date_str,
+                    description=desc,
+                    source_format="B",
+                    raw_description=desc,
+                    original_data=dict(row),
+                ))
+            except Exception as exc:
+                errors.append(ParseError(
+                    source_file=path.name,
+                    row_number=row_num,
+                    raw_data=dict(row),
+                    error_message=f"{type(exc).__name__}: {exc}",
+                    timestamp=datetime.now().isoformat(),
+                ))
+
+    return records, errors
+
+
 
 
 def parse_all_external(
