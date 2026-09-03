@@ -26,9 +26,6 @@ sys.path.insert(0, str(PROJECT_ROOT))
 from src.ingestion import parse_internal, parse_all_external
 from src.deterministic_matcher import run_deterministic_matching
 from src.gl_classifier import (
-    ClassificationOutput,
-    ClassifiedEntry,
-    GLSubEntry,
     compute_fee_tax_split,
     run_gl_classification,
     _rule_1_refund_type,
@@ -390,6 +387,45 @@ class TestPartialRefundStructuredSignal:
             match_path=MatchPath.LLM, confidence=0.9,
         )
         assert match.is_partial_refund is False
+
+    def test_keyword_fallback_rejects_negation(self):
+        """'this is not a partial refund' must NOT match on the bare
+        substring -- the negation-aware fallback should reject it."""
+        from src.gl_classifier import _is_partial_refund_reasoning
+        match = self._make_match(
+            is_partial=False,
+            reasoning="This is not a partial refund, amounts match exactly",
+        )
+        assert _is_partial_refund_reasoning(match) is False
+
+    def test_keyword_fallback_rejects_contraction_negation(self):
+        """"isn't a partial refund" -- contraction form of negation."""
+        from src.gl_classifier import _is_partial_refund_reasoning
+        match = self._make_match(
+            is_partial=False,
+            reasoning="It isn't a partial refund based on the amounts",
+        )
+        assert _is_partial_refund_reasoning(match) is False
+
+    def test_keyword_fallback_still_detects_true_positive(self):
+        """Negation-awareness must not break genuine, unnegated matches."""
+        from src.gl_classifier import _is_partial_refund_reasoning
+        match = self._make_match(
+            is_partial=False,
+            reasoning="Confirmed: this is a partial refund scenario",
+        )
+        assert _is_partial_refund_reasoning(match) is True
+
+    def test_structured_field_wins_even_with_negated_text(self):
+        """The structured field is authoritative -- even if the reasoning
+        text happens to contain a negated phrase, is_partial_refund=True
+        from the LLM's structured output should still be trusted."""
+        from src.gl_classifier import _is_partial_refund_reasoning
+        match = self._make_match(
+            is_partial=True,
+            reasoning="Not a coincidence -- this is a partial refund",
+        )
+        assert _is_partial_refund_reasoning(match) is True
 
 
 # ── Test: Rule distribution ──────────────────────────────────

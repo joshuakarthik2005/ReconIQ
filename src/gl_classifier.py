@@ -23,17 +23,18 @@ LLM fallback:
   Any record not classified by the rules above gets sent to Gemini.
   Expected residual on this dataset: 0 records.
 
-Limitation (stated in README):
-  Rule 2's "partial refund" keyword check is verified on this dataset's
-  2 records (TXN_005, TXN_031) but would need hardening (negation handling,
-  multi-language) to generalise.
+Rule 2's "partial refund" keyword check is negation-aware (see
+_is_partial_refund_reasoning / _NEGATION_RE below) so "not a partial
+refund" no longer false-positives. Verified on this dataset's 2 records
+(TXN_005, TXN_031) plus a dedicated negation test suite. Still
+single-language (English) only.
 """
 
 import os
 import json
+import re
 import time
 from dataclasses import dataclass, field
-from datetime import datetime
 from decimal import Decimal, ROUND_HALF_UP
 from typing import Dict, List, Optional
 
@@ -152,6 +153,15 @@ def compute_fee_tax_split(
 
 # ── Deterministic classification rules ───────────────────────
 
+_PARTIAL_REFUND_RE = re.compile(r"\bpartial refund\b")
+# Negation cues that, appearing shortly before "partial refund", flip a
+# substring match into a false positive -- "this is NOT a partial refund"
+# must not classify as REFUND just because the phrase appears in the text.
+_NEGATION_RE = re.compile(
+    r"\b(not|isn't|isnt|wasn't|wasnt|no|never|without|n't)\b[\w\s,-]{0,20}$"
+)
+
+
 def _is_partial_refund_reasoning(match: MatchResult) -> bool:
     """Check if the match identifies a partial refund.
 
@@ -161,14 +171,25 @@ def _is_partial_refund_reasoning(match: MatchResult) -> bool:
 
     Fallback: keyword heuristic on free-text reasoning (legacy — kept for
     backward compatibility with canonical results that predate the field).
+    Negation-aware: a negation cue (not/isn't/wasn't/no/never/without/n't)
+    in the ~20 characters immediately before "partial refund" flips the
+    match to False, so "this is not a partial refund" is correctly
+    rejected instead of matching on the bare substring.
     Verified on this dataset (TXN_005, TXN_026, TXN_031, TXN_054).
-    See README Known Limitations for caveats.
     """
     # Primary: structured bool field from LLM response
     if match.is_partial_refund:
         return True
-    # Fallback: keyword heuristic (legacy — for canonical/pre-field records)
-    return "partial refund" in match.reasoning.lower()
+
+    # Fallback: negation-aware keyword heuristic (legacy — for
+    # canonical/pre-field records only; the structured field above is
+    # always preferred when present).
+    text = match.reasoning.lower()
+    for m in _PARTIAL_REFUND_RE.finditer(text):
+        preceding = text[:m.start()]
+        if not _NEGATION_RE.search(preceding):
+            return True
+    return False
 
 
 def _rule_1_refund_type(
@@ -553,7 +574,10 @@ def run_gl_classification(
     # ── Tier 1: Deterministic rules ──────────────────────────
     for match in matches:
         internal = int_by_id.get(match.internal_id)
-        external = ext_by_id.get(match.external_id)
+        # match.external_id is Optional (exception records legitimately
+        # have none); dict.get(None) would just return None anyway, but
+        # this keeps the lookup honestly typed instead of relying on that.
+        external = ext_by_id.get(match.external_id) if match.external_id else None
 
         if not internal or not external:
             # Defensive: shouldn't happen, but don't silently drop
