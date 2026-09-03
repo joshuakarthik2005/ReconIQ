@@ -150,4 +150,3 @@ def save_audit_trail(entries: List[AuditEntry], output_path: Path) -> None:
                 "timestamp": entry.timestamp,
             }, ensure_ascii=False)
             f.write(line + "\n")
-# _version: per-decision-timestamps
