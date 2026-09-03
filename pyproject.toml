@@ -1,0 +1,28 @@
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+# Scoped to pyflakes (real bugs: unused imports/vars, undefined names,
+# f-strings with no placeholders) rather than full pycodestyle. Style rules
+# like line-length/import-sort would churn a lot of pre-existing lines for
+# no correctness benefit -- not worth the diff noise this close to a deadline.
+select = ["F"]
+# E402 would otherwise fire on the entry-point scripts below: each does
+# `sys.path.insert(0, str(PROJECT_ROOT))` before importing `src.*`, because
+# they're run directly (not as part of the installed package) and need the
+# project root on sys.path first. Left here in case E402 is ever re-enabled.
+[tool.ruff.lint.per-file-ignores]
+"run_full_pipeline.py" = ["E402"]
+"qa_cli.py" = ["E402"]
+"tests/*" = ["E402"]
+
+[tool.mypy]
+python_version = "3.11"
+files = ["src"]
+ignore_missing_imports = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+# Intentionally not strict: this is a hackathon-scoped codebase, not a
+# published library. The goal is catching real type errors, not maximal
+# annotation coverage.
