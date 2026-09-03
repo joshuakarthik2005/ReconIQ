@@ -338,3 +338,17 @@ def main():
         reports_dir=REPORTS_DIR,
         output_path=dashboard_path,
     )
+
+    elapsed = time.perf_counter() - t0
+    print()
+    print("=" * 60)
+    print(f"  Pipeline complete in {elapsed:.1f}s")
+    print(f"  Report: {report_path}")
+    print(f"  Dashboard: {dashboard_path}")
+    print(f"  Exceptions: {REPORTS_DIR / 'exceptions.json'}")
+    print(f"  Audit trail: {REPORTS_DIR / 'audit_trail.jsonl'}")
+    print("=" * 60)
+
+
+if __name__ == "__main__":
+    main()
