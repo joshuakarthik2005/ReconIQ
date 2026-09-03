@@ -498,3 +498,50 @@ def run_deterministic_matching(
             confidence=0.95,
             rule_name="amount_date_unique",
             reasoning=(
+                f"Amount+date match, bidirectionally unique: "
+                f"amount={txn.amount}, date={txn.date}, "
+                f"no ref on external (ext has ref={ext.reference_id!r})"
+            ),
+            timestamp=datetime.now().isoformat(),
+        )
+
+    # Process each rule tier in order
+    rule_generators = [_gen_rule_1, _gen_rule_2, _gen_rule_3, _gen_rule_4]
+
+    for gen_fn in rule_generators:
+        # Collect all candidates for this tier among unmatched internals
+        unmatched = [t for t in internals if t.txn_id not in matched_int_ids]
+        tier_candidates = _collect_all_candidates_for_rule(gen_fn, unmatched)
+
+        # Optimal assignment within this tier
+        tier_assigned = _optimal_assign_tier(tier_candidates)
+
+        for result in tier_assigned:
+            matched.append(result)
+            claimed.add(result.external_id)
+            matched_int_ids.add(result.internal_id)
+            rule_counts[result.rule_name] += 1
+
+    # Residuals
+    residual_internal = [t for t in internals if t.txn_id not in matched_int_ids]
+    residual_external = [e for e in externals if e.ext_id not in claimed]
+
+    elapsed = time.perf_counter() - t0
+
+    stats = {
+        **rule_counts,
+        "total_matched": len(matched),
+        "total_residual_internal": len(residual_internal),
+        "total_residual_external": len(residual_external),
+        "total_internal": len(internals),
+        "total_external": len(externals),
+    }
+
+    return MatchingOutput(
+        matched=matched,
+        residual_internal=residual_internal,
+        residual_external=residual_external,
+        stats=stats,
+        elapsed_seconds=elapsed,
+    )
+
