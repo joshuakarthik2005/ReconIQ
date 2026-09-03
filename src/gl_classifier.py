@@ -558,3 +558,107 @@ def run_gl_classification(
         if not internal or not external:
             # Defensive: shouldn't happen, but don't silently drop
             classified.append(ClassifiedEntry(
+                match_result=match,
+                gl_category=GLCategory.UNCLASSIFIED,
+                classification_path="rule",
+                rule_name="missing_record",
+                reasoning=(
+                    f"Could not find internal ({match.internal_id}) or "
+                    f"external ({match.external_id}) record for classification"
+                ),
+            ))
+            continue
+
+        # Phase A: determine primary GL category
+        entry = None
+        for rule_fn in _CATEGORY_RULES:
+            entry = rule_fn(match, internal, external)
+            if entry is not None:
+                break
+
+        if entry is not None:
+            # Phase B: attach fee/tax sub-entries if applicable
+            if match.rule_name == "ref_fee_tolerance":
+                _attach_fee_sub_entries(entry, internal, external)
+            classified.append(entry)
+        else:
+            # No rule matched — send to LLM
+            llm_residual.append((match, internal, external))
+
+    # ── Tier 2: LLM classification (batched) ─────────────────
+    if llm_residual:
+        key = (
+            api_key
+            or os.environ.get("GEMINI_API_KEY")
+            or os.environ.get("GOOGLE_API_KEY")
+        )
+        if not key:
+            # No API key — classify as UNCLASSIFIED with reason
+            for match, internal, external in llm_residual:
+                classified.append(ClassifiedEntry(
+                    match_result=match,
+                    gl_category=GLCategory.UNCLASSIFIED,
+                    classification_path="llm",
+                    rule_name="llm_classification",
+                    reasoning="No API key available for LLM classification",
+                ))
+        else:
+            client = genai.Client(api_key=key)
+
+            # Batch records using Part 3's pattern
+            for batch_start in range(0, len(llm_residual), BATCH_SIZE):
+                batch = llm_residual[batch_start:batch_start + BATCH_SIZE]
+
+                if len(batch) == 1:
+                    match, internal, external = batch[0]
+                    prompt = _build_classification_prompt(
+                        match, internal, external
+                    )
+                    raw, in_tok, out_tok = _call_llm_classification(
+                        client, prompt
+                    )
+                    total_calls += 1
+                    total_in_tokens += in_tok
+                    total_out_tokens += out_tok
+
+                    try:
+                        data = json.loads(raw)
+                        cat_name = str(
+                            data.get("category", "UNCLASSIFIED")
+                        ).strip().upper()
+                        reasoning = str(data.get("reasoning", ""))
+                        gl_cat = _GL_CATEGORY_MAP.get(
+                            cat_name, GLCategory.UNCLASSIFIED
+                        )
+                    except json.JSONDecodeError:
+                        gl_cat = GLCategory.UNCLASSIFIED
+                        reasoning = f"JSON parse error: {raw[:200]}"
+
+                    classified.append(ClassifiedEntry(
+                        match_result=match,
+                        gl_category=gl_cat,
+                        classification_path="llm",
+                        rule_name="llm_classification",
+                        reasoning=reasoning,
+                    ))
+                else:
+                    prompt = _build_batch_classification_prompt(batch)
+                    raw, in_tok, out_tok = _call_llm_classification(
+                        client, prompt
+                    )
+                    total_calls += 1
+                    total_in_tokens += in_tok
+                    total_out_tokens += out_tok
+
+                    batch_results = _parse_classification_response(raw, batch)
+                    classified.extend(batch_results)
+
+    elapsed = time.perf_counter() - t0
+
+    return ClassificationOutput(
+        classified=classified,
+        llm_calls=total_calls,
+        llm_input_tokens=total_in_tokens,
+        llm_output_tokens=total_out_tokens,
+        elapsed_seconds=elapsed,
+    )
