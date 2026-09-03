@@ -478,3 +478,83 @@ def _call_llm_classification(
                     system_instruction=_CLASSIFICATION_SYSTEM_PROMPT,
                     temperature=0.0,
                     response_mime_type="application/json",
+                ),
+            )
+            _last_call_time[:] = [time.time()]
+
+            text = response.text or ""
+            usage = getattr(response, "usage_metadata", None)
+            in_tok = getattr(usage, "prompt_token_count", 0) or 0
+            out_tok = getattr(usage, "candidates_token_count", 0) or 0
+
+            return text, in_tok, out_tok
+
+        except Exception as e:
+            err_str = str(e)
+            if "429" in err_str or "RESOURCE_EXHAUSTED" in err_str:
+                backoff = min_interval * (2 ** attempt)
+                print(
+                    f"    [retry {attempt+1}/{max_retries}] "
+                    f"rate limited, waiting {backoff:.0f}s...",
+                    file=sys.stderr,
+                )
+                time.sleep(backoff)
+                _last_call_time[:] = [time.time()]
+            else:
+                raise
+
+    raise RuntimeError(f"Failed after {max_retries} retries")
+
+
+# ═══════════════════════════════════════════════════════════════
+# Public API
+# ═══════════════════════════════════════════════════════════════
+
+# Phase A: Primary category cascade (first match wins).
+# Fee/tax sub-entries are attached in Phase B, after this cascade.
+_CATEGORY_RULES = [
+    _rule_1_refund_type,         # txn_type=refund
+    _rule_3_partial_refund_llm,  # LLM reasoning keyword
+    _rule_4_clean_settlement,    # Catch-all
+]
+
+BATCH_SIZE = 4  # Reuse Part 3's batch size for LLM calls
+
+
+def run_gl_classification(
+    matches: List[MatchResult],
+    internals: List[InternalTransaction],
+    externals: List[ExternalTransaction],
+    *,
+    api_key: Optional[str] = None,
+) -> ClassificationOutput:
+    """
+    Classify all matched records into GL categories.
+
+    Two-tier approach:
+      Tier 1 — deterministic rules (expected to handle 100% of this dataset)
+      Tier 2 — LLM fallback (safety net for future ambiguous cases)
+
+    Returns ClassificationOutput with exactly len(matches) ClassifiedEntry
+    objects — one per match, no flattening of sub-entries.
+    """
+    t0 = time.perf_counter()
+
+    int_by_id: Dict[str, InternalTransaction] = {t.txn_id: t for t in internals}
+    ext_by_id: Dict[str, ExternalTransaction] = {e.ext_id: e for e in externals}
+
+    classified: List[ClassifiedEntry] = []
+    llm_residual: list = []  # (match, internal, external)
+
+    total_calls = 0
+    total_in_tokens = 0
+    total_out_tokens = 0
+
+    # ── Tier 1: Deterministic rules ──────────────────────────
+    for match in matches:
+        internal = int_by_id.get(match.internal_id)
+        external = ext_by_id.get(match.external_id)
+
+        if not internal or not external:
+            # Defensive: shouldn't happen, but don't silently drop
+            classified.append(ClassifiedEntry(
