@@ -662,4 +662,3 @@ def run_gl_classification(
         llm_output_tokens=total_out_tokens,
         elapsed_seconds=elapsed,
     )
-# _version: negation-hardened
