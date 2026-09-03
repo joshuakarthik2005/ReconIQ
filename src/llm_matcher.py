@@ -478,3 +478,93 @@ def _call_llm(
 
     Rate limit: free tier allows 5 requests/minute.
     We space calls by at least *min_interval* seconds and retry with
+    exponential backoff on 429 RESOURCE_EXHAUSTED errors.
+    """
+    import sys
+
+    # Rate limiting: ensure min_interval between calls
+    if _last_call_time:
+        elapsed = time.time() - _last_call_time[0]
+        if elapsed < min_interval:
+            wait = min_interval - elapsed
+            print(f"    [rate-limit] waiting {wait:.1f}s...", file=sys.stderr)
+            time.sleep(wait)
+
+    for attempt in range(max_retries):
+        try:
+            response = client.models.generate_content(
+                model=MODEL,
+                contents=user,
+                config=types.GenerateContentConfig(
+                    system_instruction=system,
+                    temperature=0.0,
+                    response_mime_type="application/json",
+                ),
+            )
+            _last_call_time[:] = [time.time()]
+
+            text = response.text or ""
+            usage = getattr(response, "usage_metadata", None)
+            in_tok = getattr(usage, "prompt_token_count", 0) or 0
+            out_tok = getattr(usage, "candidates_token_count", 0) or 0
+
+            return text, in_tok, out_tok
+
+        except Exception as e:
+            err_str = str(e)
+            if "429" in err_str or "RESOURCE_EXHAUSTED" in err_str:
+                backoff = min_interval * (2 ** attempt)
+                print(
+                    f"    [retry {attempt+1}/{max_retries}] "
+                    f"rate limited, waiting {backoff:.0f}s...",
+                    file=sys.stderr,
+                )
+                time.sleep(backoff)
+                _last_call_time[:] = [time.time()]
+            else:
+                raise
+
+    raise RuntimeError(f"Failed after {max_retries} retries")
+
+
+# ── Response Parsing with Code-Level Validation ──────────────
+
+def _parse_single_response(
+    raw: str,
+    candidates: List[ExternalTransaction],
+    confidence_threshold: float,
+) -> Tuple[Optional[str], float, str, bool]:
+    """
+    Parse single-match response -> (ext_id | None, confidence, reasoning, is_partial_refund).
+
+    Validates index bounds and confidence threshold in code.
+    """
+    try:
+        data = json.loads(raw)
+    except json.JSONDecodeError:
+        return None, 0.0, f"JSON parse error: {raw[:200]}", False
+
+    match_idx = data.get("match_index")
+    confidence = float(data.get("confidence", 0.0))
+    reasoning = str(data.get("reasoning", ""))
+    is_partial_refund = bool(data.get("is_partial_refund", False))
+
+    if match_idx is None:
+        return None, confidence, reasoning, is_partial_refund
+
+    if not isinstance(match_idx, int) or match_idx < 1 or match_idx > len(candidates):
+        return None, confidence, f"Invalid index {match_idx}: {reasoning}", False
+
+    if confidence < confidence_threshold:
+        return None, confidence, (
+            f"Below threshold ({confidence:.2f} < {confidence_threshold}): "
+            f"{reasoning}"
+        ), False
+
+    return candidates[match_idx - 1].ext_id, confidence, reasoning, is_partial_refund
+
+
+def _parse_group_response(
+    raw: str,
+    group: _AmbiguityGroup,
+    confidence_threshold: float,
