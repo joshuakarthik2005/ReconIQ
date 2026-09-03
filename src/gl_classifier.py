@@ -298,3 +298,103 @@ def _build_classification_prompt(
         f"INTERNAL RECORD:\n"
         f"  ID: {internal.txn_id}\n"
         f"  Type: {internal.txn_type}\n"
+        f"  Amount: {internal.amount} {internal.currency}\n"
+        f"  Date: {internal.date}\n"
+        f"  Merchant: {internal.merchant_name} ({internal.merchant_category})\n"
+        f"  Method: {internal.payment_method}\n"
+        f"  Description: {internal.description}\n\n"
+        f"EXTERNAL RECORD:\n"
+        f"  ID: {external.ext_id}\n"
+        f"  Amount: {external.amount}\n"
+        f"  Date: {external.date}\n"
+        f"  Description: {external.description}\n"
+        f"  Raw: {external.raw_description}\n\n"
+        f"MATCHING DETAILS:\n"
+        f"  Match path: {match.match_path.value}\n"
+        f"  Rule: {match.rule_name}\n"
+        f"  Confidence: {match.confidence}\n"
+        f"  Reasoning: {match.reasoning}\n\n"
+        f"What GL category should this entry be classified under?"
+    )
+
+
+def _build_batch_classification_prompt(
+    items: list,
+) -> str:
+    """Build a batched prompt for LLM classification of multiple records.
+
+    Reuses Part 3's scoped-candidate batching pattern — each record is
+    labelled A, B, C, ... and the LLM returns per-record classifications.
+    """
+    blocks = []
+    for i, (match, internal, external) in enumerate(items):
+        label = chr(65 + i)
+        blocks.append(
+            f"RECORD {label}:\n"
+            f"  Internal ID: {internal.txn_id}\n"
+            f"  Type: {internal.txn_type}\n"
+            f"  Amount: {internal.amount} {internal.currency}\n"
+            f"  Date: {internal.date}\n"
+            f"  Merchant: {internal.merchant_name} ({internal.merchant_category})\n"
+            f"  Method: {internal.payment_method}\n"
+            f"  Description: {internal.description}\n"
+            f"  External Amount: {external.amount}\n"
+            f"  External Date: {external.date}\n"
+            f"  External Description: {external.description}\n"
+            f"  Match path: {match.match_path.value}\n"
+            f"  Match reasoning: {match.reasoning}"
+        )
+
+    labels = ", ".join(chr(65 + i) for i in range(len(items)))
+    all_blocks = "\n\n".join(blocks)
+
+    return (
+        f"BATCH CLASSIFICATION TASK\n"
+        f"Classify each record into a GL category.\n\n"
+        f"{all_blocks}\n\n"
+        f"Respond with JSON:\n"
+        f'{{"classifications": [\n'
+        f'  {{"label": "<one of {labels}>", '
+        f'"category": "<GL category>", '
+        f'"reasoning": "<explanation>"}},\n'
+        f"  ... one entry per record\n"
+        f"]}}"
+    )
+
+
+_GL_CATEGORY_MAP = {cat.name: cat for cat in GLCategory}
+
+
+def _parse_classification_response(
+    raw: str,
+    items: list,
+) -> List[ClassifiedEntry]:
+    """Parse LLM classification response.
+
+    Fault-tolerant: if one record's entry is malformed, others still process.
+    Unclassified records get UNCLASSIFIED with an error reason.
+    """
+    try:
+        data = json.loads(raw)
+    except json.JSONDecodeError:
+        return [
+            ClassifiedEntry(
+                match_result=match,
+                gl_category=GLCategory.UNCLASSIFIED,
+                classification_path="llm",
+                rule_name="llm_classification",
+                reasoning=f"JSON parse error: {raw[:200]}",
+            )
+            for match, _, _ in items
+        ]
+
+    classifications = data.get("classifications", [])
+    label_to_item = {chr(65 + i): item for i, item in enumerate(items)}
+
+    results = []
+    responded_labels = set()
+
+    for entry in classifications:
+        try:
+            label = str(entry.get("label", "")).strip().upper()
+            item = label_to_item.get(label)
