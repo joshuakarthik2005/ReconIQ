@@ -658,3 +658,72 @@ def run_llm_matching(
     Sequencing (order matters):
       1. Detect ambiguity groups (duplicate_amount pattern)
       2. Resolve groups via joint LLM call — claims externals
+      3. Build individual shortlists with UPDATED claimed set
+      4. Resolve individuals via single LLM calls
+    """
+    t0 = time.perf_counter()
+
+    key = (
+        api_key
+        or os.environ.get("GEMINI_API_KEY")
+        or os.environ.get("GOOGLE_API_KEY")
+    )
+    if not key:
+        raise RuntimeError(
+            "No API key. Set GEMINI_API_KEY or GOOGLE_API_KEY, "
+            "or pass api_key=."
+        )
+
+    client = genai.Client(api_key=key)
+
+    claimed: Set[str] = set()
+    matched: List[MatchResult] = []
+    total_calls = 0
+    total_in_tokens = 0
+    total_out_tokens = 0
+
+    # ── Phase 1: Group resolution ────────────────────────────
+    groups, grouped_ids = _detect_ambiguity_groups(
+        residual_internal, residual_external, claimed
+    )
+
+    for group in groups:
+        prompt = _group_prompt(group)
+        raw, in_tok, out_tok = _call_llm(client, _SYSTEM_PROMPT, prompt)
+        total_calls += 1
+        total_in_tokens += in_tok
+        total_out_tokens += out_tok
+
+        assignments = _parse_group_response(raw, group, confidence_threshold)
+
+        for internal_id, ext_id, confidence, reasoning, is_partial in assignments:
+            if ext_id and ext_id not in claimed:
+                claimed.add(ext_id)
+                matched.append(MatchResult(
+                    internal_id=internal_id,
+                    external_id=ext_id,
+                    match_path=MatchPath.LLM,
+                    confidence=confidence,
+                    rule_name="llm_group_assignment",
+                    reasoning=reasoning,
+                    is_partial_refund=is_partial,
+                    timestamp=datetime.now().isoformat(),
+                ))
+
+    # ── Phase 2: Batched individual resolution ─────────────────
+    # Batch records into groups of BATCH_SIZE to minimize API calls
+    # (free tier: 5 req/min). Each batch is a group prompt.
+    BATCH_SIZE = 4
+    phase2_records = [
+        txn for txn in residual_internal if txn.txn_id not in grouped_ids
+    ]
+
+    # Pre-build shortlists for all Phase 2 records (with updated claimed set)
+    phase2_with_cands = []
+    for txn in phase2_records:
+        candidates = _build_candidate_shortlist(
+            txn, residual_external, claimed, max_candidates
+        )
+        if candidates:
+            phase2_with_cands.append((txn, candidates))
+        # else: no candidates -> straight to exception (no LLM call)
