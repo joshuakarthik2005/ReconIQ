@@ -1,0 +1,360 @@
+{
+  "_warning": "This file is for validation ONLY. It must NEVER be read by any matching or classification module.",
+  "matches": [
+    {
+      "internal_id": "TXN_024",
+      "external_id": "EXT_001",
+      "noise_type": "exact",
+      "external_format": "C"
+    },
+    {
+      "internal_id": "TXN_021",
+      "external_id": "EXT_002",
+      "noise_type": "duplicate_amount",
+      "external_format": "C"
+    },
+    {
+      "internal_id": "TXN_031",
+      "external_id": "EXT_003",
+      "noise_type": "partial_refund",
+      "external_format": "A"
+    },
+    {
+      "internal_id": "TXN_050",
+      "external_id": "EXT_004",
+      "noise_type": "exact",
+      "external_format": "B"
+    },
+    {
+      "internal_id": "TXN_002",
+      "external_id": "EXT_005",
+      "noise_type": "exact",
+      "external_format": "A"
+    },
+    {
+      "internal_id": "TXN_057",
+      "external_id": "EXT_006",
+      "noise_type": "exact",
+      "external_format": "C"
+    },
+    {
+      "internal_id": "TXN_059",
+      "external_id": "EXT_007",
+      "noise_type": "date_drift",
+      "external_format": "A"
+    },
+    {
+      "internal_id": "TXN_018",
+      "external_id": "EXT_008",
+      "noise_type": "exact",
+      "external_format": "B"
+    },
+    {
+      "internal_id": "TXN_061",
+      "external_id": "EXT_009",
+      "noise_type": "fee_rounding",
+      "external_format": "C"
+    },
+    {
+      "internal_id": "TXN_029",
+      "external_id": "EXT_010",
+      "noise_type": "duplicate_amount",
+      "external_format": "B"
+    },
+    {
+      "internal_id": "TXN_014",
+      "external_id": "EXT_011",
+      "noise_type": "missing_ref",
+      "external_format": "A"
+    },
+    {
+      "internal_id": "TXN_032",
+      "external_id": "EXT_012",
+      "noise_type": "fee_rounding",
+      "external_format": "A"
+    },
+    {
+      "internal_id": "TXN_015",
+      "external_id": "EXT_013",
+      "noise_type": "exact",
+      "external_format": "A"
+    },
+    {
+      "internal_id": "TXN_013",
+      "external_id": "EXT_014",
+      "noise_type": "date_drift",
+      "external_format": "B"
+    },
+    {
+      "internal_id": "TXN_035",
+      "external_id": "EXT_015",
+      "noise_type": "exact",
+      "external_format": "B"
+    },
+    {
+      "internal_id": "TXN_004",
+      "external_id": "EXT_016",
+      "noise_type": "missing_ref",
+      "external_format": "B"
+    },
+    {
+      "internal_id": "TXN_027",
+      "external_id": "EXT_017",
+      "noise_type": "fee_rounding",
+      "external_format": "C"
+    },
+    {
+      "internal_id": "TXN_003",
+      "external_id": "EXT_018",
+      "noise_type": "exact",
+      "external_format": "A"
+    },
+    {
+      "internal_id": "TXN_041",
+      "external_id": "EXT_019",
+      "noise_type": "fee_rounding",
+      "external_format": "B"
+    },
+    {
+      "internal_id": "TXN_005",
+      "external_id": "EXT_020",
+      "noise_type": "partial_refund",
+      "external_format": "B"
+    },
+    {
+      "internal_id": "TXN_008",
+      "external_id": "EXT_021",
+      "noise_type": "missing_ref",
+      "external_format": "B"
+    },
+    {
+      "internal_id": "TXN_037",
+      "external_id": "EXT_022",
+      "noise_type": "date_drift",
+      "external_format": "A"
+    },
+    {
+      "internal_id": "TXN_016",
+      "external_id": "EXT_023",
+      "noise_type": "fee_rounding",
+      "external_format": "A"
+    },
+    {
+      "internal_id": "TXN_011",
+      "external_id": "EXT_024",
+      "noise_type": "exact",
+      "external_format": "A"
+    },
+    {
+      "internal_id": "TXN_063",
+      "external_id": "EXT_025",
+      "noise_type": "duplicate_amount",
+      "external_format": "A"
+    },
+    {
+      "internal_id": "TXN_033",
+      "external_id": "EXT_026",
+      "noise_type": "exact",
+      "external_format": "B"
+    },
+    {
+      "internal_id": "TXN_048",
+      "external_id": "EXT_027",
+      "noise_type": "exact",
+      "external_format": "A"
+    },
+    {
+      "internal_id": "TXN_030",
+      "external_id": "EXT_028",
+      "noise_type": "duplicate_amount",
+      "external_format": "B"
+    },
+    {
+      "internal_id": "TXN_001",
+      "external_id": "EXT_029",
+      "noise_type": "exact",
+      "external_format": "C"
+    },
+    {
+      "internal_id": "TXN_012",
+      "external_id": "EXT_030",
+      "noise_type": "exact",
+      "external_format": "A"
+    },
+    {
+      "internal_id": "TXN_058",
+      "external_id": "EXT_031",
+      "noise_type": "description_only",
+      "external_format": "C"
+    },
+    {
+      "internal_id": "TXN_028",
+      "external_id": "EXT_032",
+      "noise_type": "fee_rounding",
+      "external_format": "A"
+    },
+    {
+      "internal_id": "TXN_040",
+      "external_id": "EXT_033",
+      "noise_type": "exact",
+      "external_format": "B"
+    },
+    {
+      "internal_id": "TXN_034",
+      "external_id": "EXT_034",
+      "noise_type": "duplicate_amount",
+      "external_format": "B"
+    },
+    {
+      "internal_id": "TXN_045",
+      "external_id": "EXT_035",
+      "noise_type": "duplicate_amount",
+      "external_format": "A"
+    },
+    {
+      "internal_id": "TXN_052",
+      "external_id": "EXT_036",
+      "noise_type": "date_drift",
+      "external_format": "B"
+    },
+    {
+      "internal_id": "TXN_060",
+      "external_id": "EXT_037",
+      "noise_type": "description_only",
+      "external_format": "B"
+    },
+    {
+      "internal_id": "TXN_062",
+      "external_id": "EXT_038",
+      "noise_type": "fee_rounding",
+      "external_format": "A"
+    },
+    {
+      "internal_id": "TXN_046",
+      "external_id": "EXT_039",
+      "noise_type": "missing_ref",
+      "external_format": "B"
+    },
+    {
+      "internal_id": "TXN_051",
+      "external_id": "EXT_040",
+      "noise_type": "date_drift",
+      "external_format": "C"
+    },
+    {
+      "internal_id": "TXN_054",
+      "external_id": "EXT_041",
+      "noise_type": "partial_refund",
+      "external_format": "A"
+    },
+    {
+      "internal_id": "TXN_065",
+      "external_id": "EXT_042",
+      "noise_type": "exact",
+      "external_format": "A"
+    },
+    {
+      "internal_id": "TXN_026",
+      "external_id": "EXT_043",
+      "noise_type": "partial_refund",
+      "external_format": "B"
+    },
+    {
+      "internal_id": "TXN_049",
+      "external_id": "EXT_044",
+      "noise_type": "description_only",
+      "external_format": "A"
+    },
+    {
+      "internal_id": "TXN_042",
+      "external_id": "EXT_045",
+      "noise_type": "exact",
+      "external_format": "C"
+    },
+    {
+      "internal_id": "TXN_020",
+      "external_id": "EXT_046",
+      "noise_type": "fee_rounding",
+      "external_format": "C"
+    },
+    {
+      "internal_id": "TXN_023",
+      "external_id": "EXT_047",
+      "noise_type": "exact",
+      "external_format": "A"
+    },
+    {
+      "internal_id": "TXN_053",
+      "external_id": "EXT_048",
+      "noise_type": "exact",
+      "external_format": "B"
+    },
+    {
+      "internal_id": "TXN_056",
+      "external_id": "EXT_049",
+      "noise_type": "missing_ref",
+      "external_format": "C"
+    },
+    {
+      "internal_id": "TXN_038",
+      "external_id": "EXT_050",
+      "noise_type": "missing_ref",
+      "external_format": "A"
+    },
+    {
+      "internal_id": "TXN_006",
+      "external_id": "EXT_051",
+      "noise_type": "exact",
+      "external_format": "A"
+    },
+    {
+      "internal_id": "TXN_022",
+      "external_id": "EXT_052",
+      "noise_type": "exact",
+      "external_format": "A"
+    }
+  ],
+  "unmatched_internal": [
+    "TXN_010",
+    "TXN_039",
+    "TXN_064",
+    "TXN_055",
+    "TXN_047",
+    "TXN_017",
+    "TXN_019",
+    "TXN_025",
+    "TXN_044",
+    "TXN_036",
+    "TXN_007",
+    "TXN_043",
+    "TXN_009"
+  ],
+  "unmatched_external": [
+    "EXT_053",
+    "EXT_054",
+    "EXT_055"
+  ],
+  "metadata": {
+    "total_internal": 65,
+    "total_external": 55,
+    "total_matched_pairs": 52,
+    "total_unmatched_internal": 13,
+    "total_unmatched_external": 3,
+    "noise_distribution": {
+      "date_drift": 5,
+      "description_only": 3,
+      "duplicate_amount": 6,
+      "exact": 20,
+      "fee_rounding": 8,
+      "missing_ref": 6,
+      "partial_refund": 4
+    },
+    "format_distribution": {
+      "A": 23,
+      "B": 18,
+      "C": 11
+    },
+    "seed": 42,
+    "generated_at": "2026-08-24T13:45:24.575797"
+  }
+}

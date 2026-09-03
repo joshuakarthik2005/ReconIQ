@@ -1,0 +1,66 @@
+txn_id,reference_id,amount,currency,txn_type,date,merchant_name,merchant_category,payment_method,status,description
+TXN_001,setl_brnTP3fAbnFbmO,2521.44,INR,settlement,2026-08-09,PolicyBazaar Insurance,Insurance,UPI,settled,Settlement batch - PolicyBazaar Insurance
+TXN_002,setl_jArnVgxwvqcCh5,21588.09,INR,settlement,2026-08-20,Swiggy Private Ltd,Food Delivery,debit_card,settled,Settlement batch - Swiggy Private Ltd
+TXN_003,setl_RcoreogrNwwmq6,8422.77,INR,settlement,2026-08-24,Swiggy Private Ltd,Food Delivery,credit_card,settled,Settlement batch - Swiggy Private Ltd
+TXN_004,pay_x9NIQ0Wobtqn62,2746.54,INR,payment,2026-08-29,CRED Operations Pvt Ltd,Fintech,netbanking,captured,Payment for order at CRED Operations Pvt Ltd
+TXN_005,pay_iUHUAKw9iEU1jj,12695.35,INR,payment,2026-08-20,Dunzo Digital Pvt Ltd,Delivery,netbanking,captured,Payment for order at Dunzo Digital Pvt Ltd
+TXN_006,pay_81aSQHqNgAC72q,15153.63,INR,payment,2026-08-04,Paytm E-commerce Pvt Ltd,Fintech,debit_card,captured,Payment for order at Paytm E-commerce Pvt Ltd
+TXN_007,rfnd_Fmxk754LEgw9Yo,9474.8,INR,refund,2026-08-03,MakeMyTrip India Pvt Ltd,Travel,netbanking,processed,Refund processed - MakeMyTrip India Pvt Ltd
+TXN_008,rfnd_8HhO6kGL75UQSy,1083.39,INR,refund,2026-08-04,PharmEasy Healthcare,Healthcare,credit_card,processed,Refund processed - PharmEasy Healthcare
+TXN_009,pay_uKoneNo41eoPni,9859.94,INR,payment,2026-08-16,Zerodha Broking Ltd,Finance,netbanking,captured,Payment for order at Zerodha Broking Ltd
+TXN_010,pay_gAACTP9gyv1plB,257.18,INR,payment,2026-08-28,Dunzo Digital Pvt Ltd,Delivery,UPI,captured,Payment for order at Dunzo Digital Pvt Ltd
+TXN_011,pay_1Id9Z850kEnydx,4028.32,INR,payment,2026-08-15,Lenskart Solutions Pvt Ltd,Eyewear,debit_card,captured,Payment for order at Lenskart Solutions Pvt Ltd
+TXN_012,pay_79ISjs8JHUdKF0,277.52,INR,payment,2026-08-28,Myntra Designs Pvt Ltd,Fashion,credit_card,captured,Payment for order at Myntra Designs Pvt Ltd
+TXN_013,pay_e1z6JJcfOJtqPt,3522.61,INR,payment,2026-08-10,Urban Company Technologies,Home Services,netbanking,captured,Payment for order at Urban Company Technologies
+TXN_014,pay_UeC99enq522wjZ,24744.66,INR,payment,2026-08-21,Nykaa E-Retail Pvt Ltd,Beauty,wallet,captured,Payment for order at Nykaa E-Retail Pvt Ltd
+TXN_015,pay_YsP6ihgIqLSmNq,4586.72,INR,payment,2026-08-02,Jio Platforms Ltd,Telecom,UPI,captured,Payment for order at Jio Platforms Ltd
+TXN_016,setl_Zcui8kBRIg6Qjc,7961.88,INR,settlement,2026-08-05,PharmEasy Healthcare,Healthcare,UPI,settled,Settlement batch - PharmEasy Healthcare
+TXN_017,pay_3X13npgW2zMj51,26239.32,INR,payment,2026-08-24,Myntra Designs Pvt Ltd,Fashion,debit_card,captured,Payment for order at Myntra Designs Pvt Ltd
+TXN_018,setl_zPTpjRxcDm4vY2,135.91,INR,settlement,2026-08-11,MakeMyTrip India Pvt Ltd,Travel,debit_card,settled,Settlement batch - MakeMyTrip India Pvt Ltd
+TXN_019,rfnd_7rNy8H6h8l7qgA,1970.05,INR,refund,2026-08-04,CRED Operations Pvt Ltd,Fintech,netbanking,processed,Refund processed - CRED Operations Pvt Ltd
+TXN_020,rfnd_lcBGYQ6TmA65MP,3073.19,INR,refund,2026-08-10,Zomato Limited,Food Delivery,netbanking,processed,Refund processed - Zomato Limited
+TXN_021,pay_RIlPxUkJzZsnWL,5873.85,INR,payment,2026-08-12,MakeMyTrip India Pvt Ltd,Travel,wallet,captured,Payment for order at MakeMyTrip India Pvt Ltd
+TXN_022,pay_3XkfFNuYUPnmbp,20369.79,INR,payment,2026-08-15,Jio Platforms Ltd,Telecom,netbanking,captured,Payment for order at Jio Platforms Ltd
+TXN_023,rfnd_JSxyjQ312WnXRC,1711.84,INR,refund,2026-08-15,PolicyBazaar Insurance,Insurance,credit_card,processed,Refund processed - PolicyBazaar Insurance
+TXN_024,rfnd_P9K63LSFZH3UDq,2845.38,INR,refund,2026-08-25,MakeMyTrip India Pvt Ltd,Travel,wallet,processed,Refund processed - MakeMyTrip India Pvt Ltd
+TXN_025,pay_oBSou3ejxjnzuC,2390.65,INR,payment,2026-08-29,Amazon Seller Services,E-commerce,wallet,captured,Payment for order at Amazon Seller Services
+TXN_026,rfnd_b2JD6sy3ZHTX3E,155.15,INR,refund,2026-08-11,Urban Company Technologies,Home Services,netbanking,processed,Refund processed - Urban Company Technologies
+TXN_027,setl_058H4KPfA1lquC,12582.52,INR,settlement,2026-08-25,CRED Operations Pvt Ltd,Fintech,netbanking,settled,Settlement batch - CRED Operations Pvt Ltd
+TXN_028,pay_fbH9vOWOU6mbjh,9359.29,INR,payment,2026-08-23,Zomato Limited,Food Delivery,debit_card,captured,Payment for order at Zomato Limited
+TXN_029,setl_kLUhY7gbtP7ySe,5873.85,INR,settlement,2026-08-12,MakeMyTrip India Pvt Ltd,Travel,wallet,settled,Payment for order at MakeMyTrip India Pvt Ltd
+TXN_030,rfnd_XJcHPeOaAEAw3C,55529.77,INR,refund,2026-08-25,Rapido Bike Taxi,Transport,debit_card,processed,Payment for order at Rapido Bike Taxi
+TXN_031,setl_5WCZKtp5rBUJPu,34091.99,INR,settlement,2026-08-07,Jio Platforms Ltd,Telecom,debit_card,settled,Settlement batch - Jio Platforms Ltd
+TXN_032,setl_v2Rra6fSEVQOEX,2319.81,INR,settlement,2026-08-08,Swiggy Private Ltd,Food Delivery,debit_card,settled,Settlement batch - Swiggy Private Ltd
+TXN_033,setl_wIv9IvCtoStU6Q,2678.89,INR,settlement,2026-08-24,BookMyShow Internet Pvt Ltd,Entertainment,wallet,settled,Settlement batch - BookMyShow Internet Pvt Ltd
+TXN_034,rfnd_GrgmolaHr8IRh1,1576.26,INR,refund,2026-08-26,Jio Platforms Ltd,Telecom,netbanking,processed,Payment for order at Jio Platforms Ltd
+TXN_035,pay_v7p1heEJQjY6fp,17126.35,INR,payment,2026-08-26,PolicyBazaar Insurance,Insurance,wallet,captured,Payment for order at PolicyBazaar Insurance
+TXN_036,pay_GBB19sMLT6mnOj,8130.65,INR,payment,2026-08-14,Myntra Designs Pvt Ltd,Fashion,netbanking,captured,Payment for order at Myntra Designs Pvt Ltd
+TXN_037,setl_Dcrr1eoqXKXmhn,66331.56,INR,settlement,2026-08-03,BigBasket (Innovative Retail),Grocery,UPI,settled,Settlement batch - BigBasket (Innovative Retail)
+TXN_038,pay_tUJrhQR6FEecAt,152.02,INR,payment,2026-08-22,Urban Company Technologies,Home Services,wallet,captured,Payment for order at Urban Company Technologies
+TXN_039,setl_bVYJVkGBr9BY8D,3515.6,INR,settlement,2026-08-28,Dunzo Digital Pvt Ltd,Delivery,credit_card,settled,Settlement batch - Dunzo Digital Pvt Ltd
+TXN_040,pay_Rr6YICtu8zF9OH,282.3,INR,payment,2026-08-20,Dunzo Digital Pvt Ltd,Delivery,netbanking,captured,Payment for order at Dunzo Digital Pvt Ltd
+TXN_041,setl_VmI5BRh8LojIIf,1028.6,INR,settlement,2026-08-27,Zomato Limited,Food Delivery,credit_card,settled,Settlement batch - Zomato Limited
+TXN_042,pay_SFqZ8pIx5F21rW,4044.73,INR,payment,2026-08-09,Dunzo Digital Pvt Ltd,Delivery,UPI,captured,Payment for order at Dunzo Digital Pvt Ltd
+TXN_043,pay_sK9EjHvIHCtlRJ,45538.75,INR,payment,2026-08-11,MakeMyTrip India Pvt Ltd,Travel,netbanking,captured,Payment for order at MakeMyTrip India Pvt Ltd
+TXN_044,setl_YxPY8EcFK12BGC,3446.52,INR,settlement,2026-08-05,BigBasket (Innovative Retail),Grocery,UPI,settled,Settlement batch - BigBasket (Innovative Retail)
+TXN_045,pay_8uQO001xtSV2ce,1576.26,INR,payment,2026-08-26,Jio Platforms Ltd,Telecom,UPI,captured,Payment for order at Jio Platforms Ltd
+TXN_046,setl_RgksbudwApzQlk,55985.52,INR,settlement,2026-08-08,Cure.fit Healthcare,Health & Fitness,netbanking,settled,Settlement batch - Cure.fit Healthcare
+TXN_047,rfnd_iCppaX3QjBvKNA,674.03,INR,refund,2026-08-13,Urban Company Technologies,Home Services,netbanking,processed,Refund processed - Urban Company Technologies
+TXN_048,pay_xwsRbZya1W84UZ,9602.37,INR,payment,2026-08-26,Nykaa E-Retail Pvt Ltd,Beauty,debit_card,captured,Payment for order at Nykaa E-Retail Pvt Ltd
+TXN_049,pay_lpUVQigMcWcwi4,8512.8,INR,payment,2026-08-05,CRED Operations Pvt Ltd,Fintech,wallet,captured,Payment for order at CRED Operations Pvt Ltd
+TXN_050,rfnd_wFqk467s1XDeUn,8065.42,INR,refund,2026-08-12,Lenskart Solutions Pvt Ltd,Eyewear,UPI,processed,Refund processed - Lenskart Solutions Pvt Ltd
+TXN_051,setl_aHCPPKY6gob2I4,17708.08,INR,settlement,2026-08-15,MakeMyTrip India Pvt Ltd,Travel,debit_card,settled,Settlement batch - MakeMyTrip India Pvt Ltd
+TXN_052,setl_hcc9hoHyx6RHKT,21673.86,INR,settlement,2026-08-20,Dunzo Digital Pvt Ltd,Delivery,netbanking,settled,Settlement batch - Dunzo Digital Pvt Ltd
+TXN_053,rfnd_rQnBow8w3Ndr86,503.0,INR,refund,2026-08-21,Rapido Bike Taxi,Transport,wallet,processed,Refund processed - Rapido Bike Taxi
+TXN_054,rfnd_du9WmZIKYoWWKr,5448.13,INR,refund,2026-08-26,BigBasket (Innovative Retail),Grocery,credit_card,processed,Refund processed - BigBasket (Innovative Retail)
+TXN_055,pay_1iwWKaqhAhdBwK,4754.37,INR,payment,2026-08-02,Rapido Bike Taxi,Transport,wallet,captured,Payment for order at Rapido Bike Taxi
+TXN_056,pay_Nb90AgSB3tjhMK,3188.26,INR,payment,2026-08-10,CRED Operations Pvt Ltd,Fintech,netbanking,captured,Payment for order at CRED Operations Pvt Ltd
+TXN_057,pay_AXhO2I1A3zZyTt,12486.02,INR,payment,2026-08-05,CRED Operations Pvt Ltd,Fintech,netbanking,captured,Payment for order at CRED Operations Pvt Ltd
+TXN_058,pay_ZffTYIKIuhvPU1,55020.5,INR,payment,2026-08-12,Amazon Seller Services,E-commerce,UPI,captured,Payment for order at Amazon Seller Services
+TXN_059,setl_nOng0wVJY08YMN,18156.62,INR,settlement,2026-08-23,Flipkart Online Services,E-commerce,debit_card,settled,Settlement batch - Flipkart Online Services
+TXN_060,pay_qV5vliOeT8fGxC,3747.18,INR,payment,2026-08-25,Myntra Designs Pvt Ltd,Fashion,wallet,captured,Payment for order at Myntra Designs Pvt Ltd
+TXN_061,setl_2jUdfBALznFvgQ,3502.1,INR,settlement,2026-08-02,Zerodha Broking Ltd,Finance,credit_card,settled,Settlement batch - Zerodha Broking Ltd
+TXN_062,pay_LasnipuaUkxRFZ,436.79,INR,payment,2026-08-02,PharmEasy Healthcare,Healthcare,netbanking,captured,Payment for order at PharmEasy Healthcare
+TXN_063,pay_51JJRzhbuXMZ5f,55529.77,INR,payment,2026-08-25,Rapido Bike Taxi,Transport,UPI,captured,Payment for order at Rapido Bike Taxi
+TXN_064,pay_tvukFhF4vTYYoj,117.79,INR,payment,2026-08-25,BookMyShow Internet Pvt Ltd,Entertainment,UPI,captured,Payment for order at BookMyShow Internet Pvt Ltd
+TXN_065,pay_VEUVB5INM1MjeB,16828.4,INR,payment,2026-08-12,Nykaa E-Retail Pvt Ltd,Beauty,wallet,captured,Payment for order at Nykaa E-Retail Pvt Ltd

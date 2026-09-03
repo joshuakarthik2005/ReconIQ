@@ -1,0 +1,19 @@
+Sl.No.,Bank Ref,Txn Ref.,Amt (INR),Dt.,Particulars,Cr/Dr
+1,EXT_021,,1083.39,04-08-26,RAZORPAY*PharmEasy Healthcare,Cr
+2,EXT_039,,"₹ 55,985.52",08 Aug 2026,RAZORPAY*Cure.fit Healthcare,Cr
+3,EXT_043,NEFT/rfnd_b2JD6sy3ZHTX3E,INR 96.00,11-08-2026,Net settlement after partial refund - Urban Company Technologies,Cr
+4,EXT_008,IMPS/setl_zPTpjRxcDm4vY2,₹135.91,11 Aug 2026,RAZORPAY*MakeMyTrip India Pvt Ltd,Cr
+5,EXT_004,NEFT/rfnd_wFqk467s1XDeUn,8065.42,12-08-26,RAZORPAY*Lenskart Solutions Pvt Ltd,Cr
+6,EXT_010,NEFT/setl_kLUhY7gbtP7ySe,5873.85,12-08-2026,RAZORPAY*MAKEMYTRIP INDIA PVT LTD,Cr
+7,EXT_014,NEFT/pay_e1z6JJcfOJtqPt,"₹3,522.61",13 Aug 2026,RAZORPAY*Urban Company Technologies,Cr
+8,EXT_033,pay_Rr6YICtu8zF9OH,282.30/-,20-08-26,RAZORPAY*Dunzo Digital Pvt Ltd,Cr
+9,EXT_020,NEFT/pay_iUHUAKw9iEU1jj,"₹ 8,994.41",20-08-2026,Net settlement after partial refund - Dunzo Digital Pvt Ltd,Cr
+10,EXT_048,NEFT/rfnd_rQnBow8w3Ndr86,₹ 503.00,21-08-26,RAZORPAY*Rapido Bike Taxi,Cr
+11,EXT_036,setl_hcc9hoHyx6RHKT,21673.86,21 Aug 2026,RAZORPAY*Dunzo Digital Pvt Ltd,Cr
+12,EXT_026,  setl_wIv9IvCtoStU6Q  ,"2,678.89/-",24 Aug 2026,RAZORPAY*BookMyShow Internet Pvt Ltd,Cr
+13,EXT_037,,"₹3,747.18",25-08-26,RAZORPAY*Myntra Designs Pvt Ltd*WALLET,Cr
+14,EXT_028,rfnd_XJcHPeOaAEAw3C,"₹ 55,529.77",25-08-2026,RAZORPAY*Rapido Bike Taxi,Cr
+15,EXT_015,IMPS/pay_v7p1heEJQjY6fp,"17,126.35/-",26-08-26,RAZORPAY*PolicyBazaar Insurance,Cr
+16,EXT_034,  rfnd_GrgmolaHr8IRh1  ,"₹ 1,576.26",26-08-26,RAZORPAY*Jio Platforms Ltd,Cr
+17,EXT_019,setl_VmI5BRh8LojIIf,"₹1,000.67",27-08-26,Settlement net of charges - Zomato Limited,Cr
+18,EXT_016,pay_x,"₹2,746.54",29/08/2026,RAZORPAY*CRED Operations Pvt Ltd,Cr

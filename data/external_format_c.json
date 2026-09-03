@@ -1,0 +1,151 @@
+{
+  "account_id": "ACC_9876543210",
+  "account_type": "CURRENT",
+  "statement_period": {
+    "from": "2026-08-01",
+    "to": "2026-08-31"
+  },
+  "generated_at": "2026-08-24T13:45:24.573057",
+  "transactions": [
+    {
+      "id": "EXT_017",
+      "timestamp": "2026-08-25T14:02:08+05:30",
+      "amount": {
+        "value": 12238.52,
+        "currency": "INR"
+      },
+      "type": "CREDIT",
+      "narrative": "Settlement net of charges - CRED Operations Pvt Ltd",
+      "reference": "setl_058H4KPfA1lquC",
+      "counterparty": {
+        "name": "RAZORPAY SOFTWARE PVT LTD",
+        "account": "XXXXXXX1234"
+      }
+    },
+    {
+      "id": "EXT_002",
+      "timestamp": "2026-08-12T11:23:24+05:30",
+      "amount": {
+        "value": 5873.85,
+        "currency": "INR"
+      },
+      "type": "CREDIT"
+    },
+    {
+      "id": "EXT_006",
+      "timestamp": "2026-08-05T04:43:28+05:30",
+      "amount": {
+        "value": 12486.02,
+        "currency": "INR"
+      },
+      "type": "CREDIT",
+      "narrative": "RAZORPAY*CRED Operations Pvt Ltd | Ref: pay_AXhO2I1A3zZyTt"
+    },
+    {
+      "id": "EXT_001",
+      "timestamp": "2026-08-25T02:36:08+05:30",
+      "amount": {
+        "value": 2845.38,
+        "currency": "INR"
+      },
+      "type": "CREDIT",
+      "narrative": "RAZORPAY*MakeMyTrip India Pvt Ltd",
+      "metadata": {
+        "payment_ref": "rfnd_P9K63LSFZH3UDq"
+      }
+    },
+    {
+      "id": "EXT_040",
+      "timestamp": "2026-08-18T20:17:15+05:30",
+      "amount": {
+        "value": 17708.08,
+        "currency": "INR"
+      },
+      "type": "CREDIT"
+    },
+    {
+      "id": "EXT_029",
+      "timestamp": "2026-08-09T05:31:33+05:30",
+      "amount": {
+        "value": 2521.44,
+        "currency": "INR"
+      },
+      "type": "CREDIT",
+      "narrative": "RAZORPAY*PolicyBazaar Insurance",
+      "reference": "setl_brnTP3fAbnFbmO",
+      "counterparty": {
+        "name": "RAZORPAY SOFTWARE PVT LTD",
+        "account": "XXXXXXX1234"
+      }
+    },
+    {
+      "id": "EXT_031",
+      "timestamp": "2026-08-12T08:49:16+05:30",
+      "amount": {
+        "value": 55020.5,
+        "currency": "INR"
+      },
+      "type": "CREDIT",
+      "narrative": "RAZORPAY*Amazon Seller Services*UPI"
+    },
+    {
+      "id": "EXT_046",
+      "timestamp": "2026-08-10T06:39:18+05:30",
+      "amount": {
+        "value": 2984.47,
+        "currency": "INR"
+      },
+      "type": "CREDIT",
+      "narrative": "Settlement net of charges - Zomato Limited",
+      "metadata": {
+        "payment_ref": "rfnd_lcBGYQ6TmA65MP"
+      }
+    },
+    {
+      "id": "EXT_049",
+      "timestamp": "2026-08-10T06:07:08+05:30",
+      "amount": {
+        "value": 3188.26,
+        "currency": "INR"
+      },
+      "type": "CREDIT",
+      "narrative": "RAZORPAY*CRED Operations Pvt Ltd"
+    },
+    {
+      "id": "EXT_009",
+      "timestamp": "2026-08-02T14:11:57+05:30",
+      "amount": {
+        "value": 3400.97,
+        "currency": "INR"
+      },
+      "type": "CREDIT",
+      "narrative": "Settlement net of charges - Zerodha Broking Ltd",
+      "metadata": {
+        "payment_ref": "setl_2jUdfBALznFvgQ"
+      }
+    },
+    {
+      "id": "EXT_054",
+      "timestamp": "2026-08-17T21:54:20+05:30",
+      "amount": {
+        "value": 285.21,
+        "currency": "INR"
+      },
+      "type": "CREDIT",
+      "narrative": "Interest credit - Current account"
+    },
+    {
+      "id": "EXT_045",
+      "timestamp": "2026-08-09T22:04:35+05:30",
+      "amount": {
+        "value": 4044.73,
+        "currency": "INR"
+      },
+      "type": "CREDIT",
+      "narrative": "RAZORPAY*Dunzo Digital Pvt Ltd",
+      "metadata": {
+        "payment_ref": "pay_SFqZ8pIx5F21rW"
+      }
+    }
+  ]
+}

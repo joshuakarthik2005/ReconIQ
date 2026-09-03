@@ -1,0 +1,26 @@
+Txn ID,Transaction Date,Value Date,Reference No,Credit,Debit,Description,Balance
+EXT_038,2026-08-02,2026-08-02,pay_LasnipuaUkxRFZ,425.13,,Settlement net of charges - PharmEasy Healthcare,500425.13
+EXT_013,2026-08-02,2026-08-02,pay_YsP6ihgIqLSmNq,4586.72,,RAZORPAY*Jio Platforms Ltd,505011.85
+EXT_051,2026-08-04,2026-08-04,pay_81aSQHqNgAC72q,15153.63,,RAZORPAY*Paytm E-commerce Pvt Ltd,520165.48
+EXT_023,2026-08-05,2026-08-05,setl_Zcui8kBRIg6Qjc,7775.80,,Settlement net of charges - PharmEasy Healthcare,527941.28
+EXT_044,2026-08-05,2026-08-05,,8512.80,,RAZORPAY*CRED Operations Pvt Ltd*WALLET,536454.08
+EXT_022,2026-08-06,2026-08-06,setl_Dcrr1eoqXKXmhn,66331.56,,RAZORPAY*BigBasket (Innovative Retail),602785.64
+EXT_003,2026-08-07,2026-08-07,setl_5WCZKtp5rBUJPu,23584.67,,Net settlement after partial refund - Jio Platforms Ltd,626370.31
+EXT_012,2026-08-08,2026-08-08,setl_v2Rra6fSEVQOEX,2257.45,,Settlement net of charges - Swiggy Private Ltd,628627.76
+EXT_042,2026-08-12,2026-08-12,pay_VEUVB5INM1MjeB,16828.40,,RAZORPAY*Nykaa E-Retail Pvt Ltd,645456.16
+EXT_053,2026-08-14,2026-08-14,,423.93,,Bank charges - Account maintenance fee Q3 2026,645880.09
+EXT_052,2026-08-15,2026-08-15,pay_3XkfFNuYUPnmbp,20369.79,,RAZORPAY*Jio Platforms Ltd,666249.88
+EXT_024,2026-08-15,2026-08-15,pay_1Id9Z850kEnydx,4028.32,,RAZORPAY*Lenskart Solutions Pvt Ltd,670278.20
+EXT_047,2026-08-15,2026-08-15,rfnd_JSxyjQ312WnXRC,1711.84,,RAZORPAY*PolicyBazaar Insurance,671990.04
+EXT_055,2026-08-16,2026-08-16,GST3302307310,230.59,,GST TDS deduction - Government of India,672220.63
+EXT_005,2026-08-20,2026-08-20,setl_jArnVgxwvqcCh5,21588.09,,RAZORPAY*Swiggy Private Ltd,693808.72
+EXT_011,2026-08-21,2026-08-21,pay_Ue,24744.66,,RAZORPAY*Nykaa E-Retail Pvt Ltd,718553.38
+EXT_050,2026-08-22,2026-08-22,pay_tU,152.02,,RAZORPAY*Urban Company Technologies,718705.40
+EXT_032,2026-08-23,2026-08-23,pay_fbH9vOWOU6mbjh,9115.06,,Settlement net of charges - Zomato Limited,727820.46
+EXT_018,2026-08-24,2026-08-24,setl_RcoreogrNwwmq6,8422.77,,RAZORPAY*Swiggy Private Ltd,736243.23
+EXT_025,2026-08-25,2026-08-25,pay_51JJRzhbuXMZ5f,55529.77,,RAZORPAY*Rapido Bike Taxi,791773.00
+EXT_041,2026-08-26,2026-08-26,rfnd_du9WmZIKYoWWKr,3845.27,,Net settlement after partial refund - BigBasket (Innovative Retail),795618.27
+EXT_007,2026-08-26,2026-08-26,setl_nOng0wVJY08YMN,18156.62,,RAZORPAY*Flipkart Online Services,813774.89
+EXT_027,2026-08-26,2026-08-26,pay_xwsRbZya1W84UZ,9602.37,,RAZORPAY*Nykaa E-Retail Pvt Ltd,823377.26
+EXT_035,2026-08-26,2026-08-26,,1576.26,,RAZORPAY*Jio Platforms Ltd,824953.52
+EXT_030,2026-08-28,2026-08-28,pay_79ISjs8JHUdKF0,277.52,,RAZORPAY*Myntra Designs Pvt Ltd,825231.04
