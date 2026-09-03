@@ -298,3 +298,43 @@ def main():
         all_internals=int_records,
         all_externals=ext_records,
         matched_results=all_matches,
+        llm_none_results=llm_none_results,
+        parse_errors=parse_errors,
+    )
+
+    audit_trail = build_audit_trail(
+        rule_matches=rule_matches,
+        llm_matches=llm_matches,
+        classification=classification,
+        exception_report=exception_report,
+        parse_errors=parse_errors,
+    )
+    print(f"  {len(exception_report.exceptions)} exceptions, "
+          f"{len(audit_trail)} audit entries")
+
+    # Save exception and audit outputs
+    save_exceptions(exception_report, REPORTS_DIR / "exceptions.json")
+    save_audit_trail(audit_trail, REPORTS_DIR / "audit_trail.jsonl")
+
+    # ── Part 6: Report Generation ────────────────────────────
+    print("Part 6: Generating report...")
+    report_path = REPORTS_DIR / "reconciliation_report.md"
+    generate_report(
+        int_records=int_records,
+        ext_records=ext_records,
+        rule_matches=rule_matches,
+        llm_matches=llm_matches,
+        classification=classification,
+        exception_report=exception_report,
+        audit_trail=audit_trail,
+        parse_errors=parse_errors,
+        output_path=report_path,
+    )
+
+    # ── Part 7: Dashboard Generation ──────────────────────────
+    print("Part 7: Generating dashboard...")
+    dashboard_path = REPORTS_DIR / "dashboard.html"
+    generate_dashboard(
+        reports_dir=REPORTS_DIR,
+        output_path=dashboard_path,
+    )
