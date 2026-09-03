@@ -348,3 +348,103 @@ def run_deterministic_matching(
        unclaimed records.
 
     This eliminates order-dependent starvation where an earlier internal
+    grabs an external that a later internal needs more.
+
+    Parameters
+    ----------
+    internals : parsed internal transactions
+    externals : parsed external transactions (all formats combined)
+    fee_tolerance_pct : maximum allowed percentage difference for fee/rounding
+    date_window_days : maximum allowed date difference in calendar days
+
+    Returns
+    -------
+    MatchingOutput with matched results, residual records, and stats.
+    """
+    t0 = time.perf_counter()
+
+    ext_index = _ExternalIndex.build(externals)
+    int_index = _InternalIndex.build(internals)
+    claimed: Set[str] = set()
+    matched_int_ids: Set[str] = set()
+    matched: List[MatchResult] = []
+
+    rule_counts = {
+        "exact_ref_amount_date": 0,
+        "exact_ref_amount_window": 0,
+        "ref_fee_tolerance": 0,
+        "amount_date_unique": 0,
+    }
+
+    # Define rule tiers: each tier is a function that takes
+    # (txn, ext_index, int_index, claimed, params) and returns Optional[MatchResult]
+    # We process tiers in order; within each tier, we collect all candidates
+    # then use Hungarian to find the optimal assignment.
+
+    def _collect_tier_candidates(
+        rule_fn,
+        unmatched_internals: List[InternalTransaction],
+    ) -> List[MatchResult]:
+        """Collect all candidate matches for a rule across unmatched internals."""
+        candidates = []
+        for txn in unmatched_internals:
+            result = rule_fn(txn)
+            if result is not None:
+                candidates.append(result)
+        return candidates
+
+    def _collect_all_candidates_for_rule(
+        rule_fn,
+        unmatched_internals: List[InternalTransaction],
+    ) -> List[MatchResult]:
+        """Collect ALL candidate matches (not just first) for a rule.
+
+        For rules 1-3 (ref-based), a single internal may match multiple
+        unclaimed externals. We collect all of them so Hungarian can pick
+        the optimal assignment.
+        """
+        candidates = []
+        for txn in unmatched_internals:
+            for cand in rule_fn(txn):
+                candidates.append(cand)
+        return candidates
+
+    # Rule candidate generators: yield ALL matches (not just first)
+    def _gen_rule_1(txn: InternalTransaction):
+        cands = ext_index.by_ref.get(txn.reference_id, [])
+        for ext in cands:
+            if ext.ext_id in claimed:
+                continue
+            if ext.amount == txn.amount and ext.date == txn.date:
+                yield MatchResult(
+                    internal_id=txn.txn_id,
+                    external_id=ext.ext_id,
+                    match_path=MatchPath.RULE,
+                    confidence=1.0,
+                    rule_name="exact_ref_amount_date",
+                    reasoning=(
+                        f"Exact match: ref={txn.reference_id}, "
+                        f"amount={txn.amount}, date={txn.date}"
+                    ),
+                    timestamp=datetime.now().isoformat(),
+                )
+
+    def _gen_rule_2(txn: InternalTransaction):
+        cands = ext_index.by_ref.get(txn.reference_id, [])
+        for ext in cands:
+            if ext.ext_id in claimed:
+                continue
+            if ext.amount == txn.amount and _date_within_window(
+                txn.date, ext.date, date_window_days
+            ):
+                yield MatchResult(
+                    internal_id=txn.txn_id,
+                    external_id=ext.ext_id,
+                    match_path=MatchPath.RULE,
+                    confidence=1.0,
+                    rule_name="exact_ref_amount_window",
+                    reasoning=(
+                        f"Ref match with date drift: ref={txn.reference_id}, "
+                        f"amount={txn.amount}, "
+                        f"int_date={txn.date}, ext_date={ext.date}"
+                    ),
