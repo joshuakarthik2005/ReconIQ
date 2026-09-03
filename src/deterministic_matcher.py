@@ -27,7 +27,7 @@ Design constraints
 
 import time
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime
 from decimal import Decimal
 from typing import Dict, List, Optional, Set, Tuple
 
@@ -242,6 +242,24 @@ def _try_rule_4(
 # Optimal assignment (Hungarian algorithm)
 # ═══════════════════════════════════════════════════════════════
 
+def _ext_id(c: MatchResult) -> str:
+    """Extract a candidate's external_id as a guaranteed non-None str.
+
+    MatchResult.external_id is Optional at the schema level -- exception
+    records legitimately carry none. But every candidate fed into optimal
+    assignment is supposed to already represent a real proposed pairing,
+    so None here means an upstream contract was violated. Fail loudly
+    instead of silently mis-keying the assignment.
+    """
+    if c.external_id is None:
+        raise ValueError(
+            f"candidate for internal_id={c.internal_id!r} has no "
+            f"external_id -- only real candidate pairings should reach "
+            f"optimal assignment"
+        )
+    return c.external_id
+
+
 def _optimal_assign_tier(
     candidates: List[MatchResult],
 ) -> List[MatchResult]:
@@ -261,7 +279,7 @@ def _optimal_assign_tier(
     # Deduplicate: for each (internal, external) pair, keep the best candidate
     best: Dict[Tuple[str, str], MatchResult] = {}
     for c in candidates:
-        key = (c.internal_id, c.external_id)
+        key = (c.internal_id, _ext_id(c))
         if key not in best or c.confidence > best[key].confidence:
             best[key] = c
 
@@ -269,7 +287,7 @@ def _optimal_assign_tier(
 
     # Collect unique internal/external IDs
     int_ids = sorted({c.internal_id for c in candidates})
-    ext_ids = sorted({c.external_id for c in candidates})
+    ext_ids = sorted({_ext_id(c) for c in candidates})
 
     if len(int_ids) == 0 or len(ext_ids) == 0:
         return []
@@ -279,8 +297,8 @@ def _optimal_assign_tier(
     int_to_ext: Dict[str, Set[str]] = {}
     ext_to_int: Dict[str, Set[str]] = {}
     for c in candidates:
-        int_to_ext.setdefault(c.internal_id, set()).add(c.external_id)
-        ext_to_int.setdefault(c.external_id, set()).add(c.internal_id)
+        int_to_ext.setdefault(c.internal_id, set()).add(_ext_id(c))
+        ext_to_int.setdefault(_ext_id(c), set()).add(c.internal_id)
 
     all_uncontested = all(
         len(exts) == 1 for exts in int_to_ext.values()
@@ -311,7 +329,7 @@ def _optimal_assign_tier(
 
     cand_lookup: Dict[Tuple[int, int], MatchResult] = {}
     for c in candidates:
-        i, j = int_idx[c.internal_id], ext_idx[c.external_id]
+        i, j = int_idx[c.internal_id], ext_idx[_ext_id(c)]
         this_cost = 1.0 - c.confidence
         if cost[i, j] == BIG or this_cost < cost[i, j]:
             cost[i, j] = this_cost
@@ -518,8 +536,18 @@ def run_deterministic_matching(
 
         for result in tier_assigned:
             matched.append(result)
-            claimed.add(result.external_id)
+            claimed.add(_ext_id(result))
             matched_int_ids.add(result.internal_id)
+            # rule_name is Optional at the schema level, but every
+            # _gen_rule_* generator always sets a real rule name -- a
+            # candidate reaching here with none would mean a rule
+            # generator regressed, so fail loudly rather than KeyError
+            # on rule_counts or silently miscounting.
+            if result.rule_name is None:
+                raise ValueError(
+                    f"matched result for internal_id={result.internal_id!r} "
+                    f"has no rule_name -- every rule generator must set one"
+                )
             rule_counts[result.rule_name] += 1
 
     # Residuals
