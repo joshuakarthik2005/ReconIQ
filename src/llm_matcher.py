@@ -378,3 +378,103 @@ def _parse_batch_response(
             item = label_to_item.get(label)
             if not item:
                 continue
+
+            txn, cands = item
+            match_label = str(entry.get("match_label", "")).strip().upper()
+            confidence = float(entry.get("confidence", 0.0))
+            reasoning = str(entry.get("reasoning", ""))
+            is_partial_refund = bool(entry.get("is_partial_refund", False))
+
+            ext_id = None
+
+            # Parse match_label: "A2" means record A, candidate index 2
+            # "A0" or label ending in 0 means NONE
+            if match_label.endswith("0") or "NONE" in match_label.upper():
+                pass  # explicit no-match
+            elif len(match_label) >= 2:
+                try:
+                    idx = int(match_label[1:]) - 1  # A1 -> index 0
+                    if 0 <= idx < len(cands):
+                        candidate = cands[idx]
+                        if confidence < confidence_threshold:
+                            reasoning = (
+                                f"Below threshold ({confidence:.2f} < "
+                                f"{confidence_threshold}): {reasoning}"
+                            )
+                            is_partial_refund = False
+                        elif candidate.ext_id in claimed_in_batch:
+                            reasoning = (
+                                f"Rejected: {candidate.ext_id} already assigned "
+                                f"in this batch: {reasoning}"
+                            )
+                            is_partial_refund = False
+                        else:
+                            ext_id = candidate.ext_id
+                            claimed_in_batch.add(ext_id)
+                    else:
+                        reasoning = f"Index {idx+1} out of range (max {len(cands)}): {reasoning}"
+                        is_partial_refund = False
+                except ValueError:
+                    reasoning = f"Unparseable match_label '{match_label}': {reasoning}"
+                    is_partial_refund = False
+            # Also handle numeric match_index as fallback
+            elif entry.get("match_index") is not None:
+                try:
+                    idx = int(entry["match_index"]) - 1
+                    if 0 <= idx < len(cands):
+                        candidate = cands[idx]
+                        if confidence < confidence_threshold:
+                            reasoning = f"Below threshold: {reasoning}"
+                            is_partial_refund = False
+                        elif candidate.ext_id in claimed_in_batch:
+                            reasoning = f"Double-claim rejected: {reasoning}"
+                            is_partial_refund = False
+                        else:
+                            ext_id = candidate.ext_id
+                            claimed_in_batch.add(ext_id)
+                except (ValueError, IndexError):
+                    pass
+
+            results.append((txn.txn_id, ext_id, confidence, reasoning, is_partial_refund))
+
+        except Exception as e:
+            # Per-record fault tolerance: skip this entry, don't crash batch
+            # Try to extract which record it was for
+            try:
+                label = str(entry.get("internal_label", "?"))
+                item = label_to_item.get(label.upper())
+                if item:
+                    results.append(
+                        (item[0].txn_id, None, 0.0, f"Parse error: {e}", False)
+                    )
+            except Exception:
+                pass
+
+    # Handle records missing from the response
+    responded_ids = {r[0] for r in results}
+    for txn, _ in items:
+        if txn.txn_id not in responded_ids:
+            results.append(
+                (txn.txn_id, None, 0.0, "Not included in LLM response", False)
+            )
+
+    return results
+
+
+
+# ── LLM Interaction ──────────────────────────────────────────
+
+def _call_llm(
+    client: genai.Client,
+    system: str,
+    user: str,
+    *,
+    _last_call_time: List = [],  # mutable default for cross-call state
+    max_retries: int = 5,
+    min_interval: float = 13.0,  # 5 req/min free tier -> 12s + 1s buffer
+) -> Tuple[str, int, int]:
+    """
+    Call Gemini with rate-limiting and retry on 429.
+
+    Rate limit: free tier allows 5 requests/minute.
+    We space calls by at least *min_interval* seconds and retry with
