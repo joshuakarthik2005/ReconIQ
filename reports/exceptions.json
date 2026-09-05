@@ -20,7 +20,7 @@
           "reasoning": "No matching external: amount 8234.56 INR not found in any candidate with compatible ref/date"
         }
       ],
-      "timestamp": "2026-09-01T23:36:11.824477"
+      "timestamp": "2026-09-05T12:29:58.842578"
     },
     {
       "record_id": "TXN_009",
@@ -34,7 +34,7 @@
           "reasoning": "No matching external: ref pay_abc123 not in candidate pool, amount 3421.78 INR unmatched"
         }
       ],
-      "timestamp": "2026-09-01T23:36:11.824477"
+      "timestamp": "2026-09-05T12:29:58.842578"
     },
     {
       "record_id": "TXN_010",
@@ -48,7 +48,7 @@
           "reasoning": "No matching external: settlement 12567.90 INR on 2026-08-03 has no compatible bank entry"
         }
       ],
-      "timestamp": "2026-09-01T23:36:11.824477"
+      "timestamp": "2026-09-05T12:29:58.842578"
     },
     {
       "record_id": "TXN_017",
@@ -62,7 +62,7 @@
           "reasoning": "No matching external: payment 4592.33 INR on 2026-08-05 not in any candidate pool"
         }
       ],
-      "timestamp": "2026-09-01T23:36:11.824477"
+      "timestamp": "2026-09-05T12:29:58.842578"
     },
     {
       "record_id": "TXN_019",
@@ -76,7 +76,7 @@
           "reasoning": "No matching external: refund 1823.45 INR on 2026-08-06 has no compatible bank entry"
         }
       ],
-      "timestamp": "2026-09-01T23:36:11.824477"
+      "timestamp": "2026-09-05T12:29:58.842578"
     },
     {
       "record_id": "TXN_025",
@@ -90,7 +90,7 @@
           "reasoning": "No matching external: settlement 6789.12 INR on 2026-08-11 not in candidate pool"
         }
       ],
-      "timestamp": "2026-09-01T23:36:11.824477"
+      "timestamp": "2026-09-05T12:29:58.842578"
     },
     {
       "record_id": "TXN_036",
@@ -104,7 +104,7 @@
           "reasoning": "Evaluated 3 candidates: none match on ref+amount+date combination. Closest candidate differs by 45% in amount"
         }
       ],
-      "timestamp": "2026-09-01T23:36:11.824477"
+      "timestamp": "2026-09-05T12:29:58.842578"
     },
     {
       "record_id": "TXN_039",
@@ -118,7 +118,7 @@
           "reasoning": "Evaluated 2 candidates: ref mismatch on both, amounts incompatible (>30% difference)"
         }
       ],
-      "timestamp": "2026-09-01T23:36:11.824477"
+      "timestamp": "2026-09-05T12:29:58.842578"
     },
     {
       "record_id": "TXN_043",
@@ -132,7 +132,7 @@
           "reasoning": "Evaluated 4 candidates: date and merchant mismatches on all. No viable match"
         }
       ],
-      "timestamp": "2026-09-01T23:36:11.824477"
+      "timestamp": "2026-09-05T12:29:58.842578"
     },
     {
       "record_id": "TXN_044",
@@ -146,7 +146,7 @@
           "reasoning": "No matching external: payment 2345.67 INR on 2026-08-22 not found in candidate pool"
         }
       ],
-      "timestamp": "2026-09-01T23:36:11.824477"
+      "timestamp": "2026-09-05T12:29:58.842578"
     },
     {
       "record_id": "TXN_047",
@@ -160,42 +160,42 @@
           "reasoning": "No matching external: settlement 5678.90 INR on 2026-08-24 has no compatible bank entry"
         }
       ],
-      "timestamp": "2026-09-01T23:36:11.824477"
+      "timestamp": "2026-09-05T12:29:58.842578"
     },
     {
       "record_id": "TXN_055",
       "record_type": "unmatched_internal",
       "reason": "No matching external record for TXN_055 (payment, 4754.37 INR, 2026-08-02, merchant=Rapido Bike Taxi): all shortlist candidates were already claimed by earlier matches",
       "attempted_matches": [],
-      "timestamp": "2026-09-01T23:36:11.824477"
+      "timestamp": "2026-09-05T12:29:58.842578"
     },
     {
       "record_id": "TXN_064",
       "record_type": "unmatched_internal",
       "reason": "No matching external record for TXN_064 (payment, 117.79 INR, 2026-08-25, merchant=BookMyShow Internet Pvt Ltd): all shortlist candidates were already claimed by earlier matches",
       "attempted_matches": [],
-      "timestamp": "2026-09-01T23:36:11.824477"
+      "timestamp": "2026-09-05T12:29:58.842578"
     },
     {
       "record_id": "EXT_053",
       "record_type": "unmatched_external",
       "reason": "External record EXT_053 not claimed by any internal match: 423.93 INR on 2026-08-14, no reference ID, description=\"Bank charges - Account maintenance fee Q3 2026\" (format A). No internal record references this entry with compatible amount/date",
       "attempted_matches": [],
-      "timestamp": "2026-09-01T23:36:11.824477"
+      "timestamp": "2026-09-05T12:29:58.842578"
     },
     {
       "record_id": "EXT_054",
       "record_type": "unmatched_external",
       "reason": "External record EXT_054 not claimed by any internal match: 285.21 INR on 2026-08-17, no reference ID, description=\"Interest credit - Current account\" (format C). No internal record references this entry with compatible amount/date",
       "attempted_matches": [],
-      "timestamp": "2026-09-01T23:36:11.824477"
+      "timestamp": "2026-09-05T12:29:58.842578"
     },
     {
       "record_id": "EXT_055",
       "record_type": "unmatched_external",
       "reason": "External record EXT_055 not claimed by any internal match: 230.59 INR on 2026-08-16, ref=GST3302307310, description=\"GST TDS deduction - Government of India\" (format A). No internal record references this entry with compatible amount/date",
       "attempted_matches": [],
-      "timestamp": "2026-09-01T23:36:11.824477"
+      "timestamp": "2026-09-05T12:29:58.842578"
     }
   ]
 }
